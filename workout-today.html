@@ -12,17 +12,19 @@
       --border: #ece2d9;
       --text: #5e5146;
       --muted: #a59688;
-      --soft-brown: #8f7c6f;
       --cream: #fffaf6;
       --blush: #f6ebe6;
-      --shadow: rgba(99, 82, 70, 0.08);
+      --rose: #d9aaa1;
+      --rose-soft: #ead2cb;
+      --brown-soft: #b3a294;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       background: transparent;
@@ -120,38 +122,35 @@
       max-width: 165px;
     }
 
-    .photo-area {
+    .picture-area {
       position: absolute;
-      right: 8px;
-      bottom: 10px;
-      width: 142px;
+      right: 2px;
+      bottom: 6px;
+      width: 165px;
       height: 155px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
       z-index: 1;
       pointer-events: none;
     }
 
-    .photo-glow {
+    .soft-arch {
       position: absolute;
-      right: -18px;
-      bottom: -12px;
-      width: 148px;
-      height: 105px;
-      background: rgba(244, 233, 227, 0.78);
+      right: -26px;
+      bottom: -16px;
+      width: 165px;
+      height: 120px;
       border-radius: 100px 100px 0 0;
+      background: rgba(244, 234, 229, 0.82);
       z-index: 0;
     }
 
-    .photo {
-      position: relative;
+    .product-scene {
+      position: absolute;
+      right: 14px;
+      bottom: 10px;
+      width: 132px;
+      height: 125px;
       z-index: 2;
-      width: 126px;
-      max-height: 138px;
-      object-fit: contain;
-      filter: drop-shadow(0 8px 12px rgba(92, 73, 60, 0.10));
-      border-radius: 10px;
+      filter: drop-shadow(0 10px 12px rgba(92, 73, 60, 0.10));
     }
 
     .edit-btn {
@@ -254,6 +253,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="card">
     <div class="top">
@@ -273,14 +273,40 @@
       <div class="loading">Loading workout…</div>
     </div>
 
-    <div class="photo-area" aria-hidden="true">
-      <div class="photo-glow"></div>
-      <img
-        id="workoutPhoto"
-        class="photo"
-        src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=700&q=80"
-        alt=""
-      />
+    <div class="picture-area" aria-hidden="true">
+      <div class="soft-arch"></div>
+
+      <svg class="product-scene" viewBox="0 0 180 165" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="91" cy="145" rx="62" ry="8" fill="#EADDD6" opacity="0.55"/>
+
+        <g transform="translate(18 84) rotate(-14)">
+          <rect x="0" y="22" width="92" height="42" rx="21" fill="#DDB8B0"/>
+          <rect x="2" y="24" width="38" height="38" rx="19" fill="#D2A49C"/>
+          <circle cx="21" cy="43" r="12" fill="#FFF7F3"/>
+          <circle cx="21" cy="43" r="5" fill="#C9978E"/>
+          <path d="M40 26C52 27 66 25 84 25" stroke="#E7CAC2" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+        </g>
+
+        <g transform="translate(106 18)">
+          <rect x="17" y="0" width="25" height="17" rx="6" fill="#8E7B70"/>
+          <rect x="9" y="13" width="42" height="98" rx="20" fill="#D8AFA6"/>
+          <rect x="16" y="29" width="28" height="57" rx="14" fill="#E6C7BF" opacity="0.72"/>
+          <path d="M30 16V107" stroke="#CFA199" stroke-width="2" opacity="0.25"/>
+          <ellipse cx="30" cy="13" rx="17" ry="4" fill="#E8CDC6" opacity="0.65"/>
+        </g>
+
+        <g transform="translate(98 120) rotate(-7)">
+          <circle cx="8" cy="18" r="11" fill="#E8D8D1"/>
+          <circle cx="39" cy="15" r="13" fill="#E8D8D1"/>
+          <rect x="15" y="14" width="24" height="7" rx="3.5" fill="#CDB3A9"/>
+        </g>
+
+        <circle cx="67" cy="135" r="10" fill="#E9D7D0"/>
+        <circle cx="86" cy="130" r="8" fill="#E9D7D0"/>
+        <circle cx="101" cy="139" r="7" fill="#E9D7D0"/>
+
+        <path d="M21 81C38 63 55 56 72 60" stroke="#F3E8E2" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+      </svg>
     </div>
 
     <button class="edit-btn" onclick="openEdit()">Edit</button>
@@ -291,7 +317,6 @@
       <div class="input-stack">
         <input id="workoutInput" placeholder="e.g. Lower Body Workout">
         <input id="durationInput" placeholder="e.g. 45 min">
-        <input id="photoInput" placeholder="Paste image URL here">
       </div>
 
       <div class="actions">
@@ -304,12 +329,10 @@
 
   <script>
     const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
-    const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=700&q=80";
 
     let apiWorkout = "";
     let customWorkout = "";
     let customDuration = "";
-    let customPhoto = "";
 
     function todayKey() {
       return new Date().toISOString().split("T")[0];
@@ -322,19 +345,17 @@
     function loadStorage() {
       customWorkout = localStorage.getItem(storageKey("customWorkout")) || "";
       customDuration = localStorage.getItem(storageKey("customDuration")) || "";
-      customPhoto = localStorage.getItem(storageKey("customPhoto")) || "";
     }
 
     function saveStorage() {
       localStorage.setItem(storageKey("customWorkout"), customWorkout);
       localStorage.setItem(storageKey("customDuration"), customDuration);
-      localStorage.setItem(storageKey("customPhoto"), customPhoto);
     }
 
     function cleanWorkoutText(text) {
       return (text || "")
         .replace(/nothing planned for today/gi, "")
-        .replace(/workout/gi, "")
+        .replace(/^workout/gi, "")
         .replace(/[•✨✦]/g, "")
         .trim();
     }
@@ -345,10 +366,6 @@
 
     function getDisplayDuration() {
       return customDuration || "45 min";
-    }
-
-    function getDisplayPhoto() {
-      return customPhoto || DEFAULT_IMAGE;
     }
 
     function escapeHTML(str) {
@@ -363,7 +380,6 @@
     function render() {
       const content = document.getElementById("content");
       const workout = getDisplayWorkout();
-      document.getElementById("workoutPhoto").src = getDisplayPhoto();
 
       if (!workout) {
         content.innerHTML = `
@@ -383,7 +399,6 @@
       document.getElementById("overlay").classList.add("open");
       document.getElementById("workoutInput").value = getDisplayWorkout();
       document.getElementById("durationInput").value = customDuration || "45 min";
-      document.getElementById("photoInput").value = customPhoto || "";
     }
 
     function closeEdit() {
@@ -393,7 +408,6 @@
     function saveCustom() {
       customWorkout = document.getElementById("workoutInput").value.trim();
       customDuration = document.getElementById("durationInput").value.trim();
-      customPhoto = document.getElementById("photoInput").value.trim();
       saveStorage();
       render();
     }
@@ -401,15 +415,12 @@
     function clearCustom() {
       customWorkout = "";
       customDuration = "";
-      customPhoto = "";
 
       localStorage.removeItem(storageKey("customWorkout"));
       localStorage.removeItem(storageKey("customDuration"));
-      localStorage.removeItem(storageKey("customPhoto"));
 
       document.getElementById("workoutInput").value = "";
       document.getElementById("durationInput").value = "";
-      document.getElementById("photoInput").value = "";
       render();
     }
 
@@ -440,10 +451,6 @@
     });
 
     document.getElementById("durationInput").addEventListener("keydown", function(event) {
-      if (event.key === "Enter") saveCustom();
-    });
-
-    document.getElementById("photoInput").addEventListener("keydown", function(event) {
       if (event.key === "Enter") saveCustom();
     });
 
