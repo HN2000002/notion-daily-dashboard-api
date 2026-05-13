@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --card: #fffdfb;
+      --border: #ece2d9;
+      --text: #5e5146;
+      --muted: #a59688;
+      --cream: #fffaf6;
+      --blush: #f6ebe6;
+      --sage: #aab39a;
+      --brown: #8b6f5d;
+      --pink: #e8c9c1;
+      --shadow: rgba(99, 82, 70, 0.10);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: "Inter", sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    body {
+      padding: 8px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 100%;
+      min-height: 300px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .icon {
+      width: 22px;
+      height: 22px;
+      color: #b5a493;
+      flex-shrink: 0;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .meal-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      padding-bottom: 22px;
+    }
+
+    .meal-row {
+      display: grid;
+      grid-template-columns: 1fr 56px;
+      gap: 12px;
+      align-items: center;
+      min-height: 50px;
+    }
+
+    .meal-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #7a6658;
+      margin-bottom: 4px;
+      line-height: 1;
+    }
+
+    .meal-name {
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      line-height: 1.22;
+      color: #4f443d;
+      max-width: 170px;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-style: italic;
+      font-weight: 400;
+    }
+
+    .food-img {
+      width: 52px;
+      height: 52px;
+      border-radius: 999px;
+      background: #fff7f1;
+      border: 1px solid #efe3db;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 6px 8px var(--shadow));
+      overflow: hidden;
+    }
+
+    .food-svg {
+      width: 54px;
+      height: 54px;
+      display: block;
+    }
+
+    .edit-btn {
+      position: absolute;
+      right: 14px;
+      bottom: 12px;
+      border: 1px solid var(--border);
+      background: var(--cream);
+      color: #7b5d52;
+      border-radius: 999px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 11px;
+      cursor: pointer;
+      font-weight: 700;
+      z-index: 5;
+    }
+
+    .edit-btn:hover {
+      background: #f7efe9;
+    }
+
+    .overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 253, 251, 0.97);
+      backdrop-filter: blur(3px);
+      border-radius: 18px;
+      padding: 18px;
+      z-index: 10;
+    }
+
+    .overlay.open {
+      display: block;
+    }
+
+    .overlay-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .input-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: white;
+      padding: 9px 10px;
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #d7c7bb;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .small-btn {
+      border: 1px solid var(--border);
+      background: var(--blush);
+      color: #6e5348;
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .small-btn.secondary {
+      background: var(--cream);
+    }
+
+    .loading,
+    .error {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="top">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M7 3V11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M5 3V7.5C5 9.2 5.9 10.4 7 10.4C8.1 10.4 9 9.2 9 7.5V3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M7 11V21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M16 3C18.2 4.6 19 7 18.3 9.5C17.8 11.2 16.8 12.4 15.7 12.8V21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+      <div class="title">Meals</div>
+    </div>
+
+    <div id="content">
+      <div class="loading">Loading meals…</div>
+    </div>
+
+    <button class="edit-btn" onclick="openEdit()">Edit</button>
+
+    <div id="overlay" class="overlay">
+      <div class="overlay-title">Edit meals</div>
+
+      <div class="input-stack">
+        <input id="breakfastInput" placeholder="Breakfast">
+        <input id="lunchInput" placeholder="Lunch">
+        <input id="dinnerInput" placeholder="Dinner">
+        <input id="snacksInput" placeholder="Snacks">
+      </div>
+
+      <div class="actions">
+        <button class="small-btn secondary" onclick="clearCustom()">Clear</button>
+        <button class="small-btn" onclick="saveCustom()">Save</button>
+        <button class="small-btn secondary" onclick="closeEdit()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
+
+    let apiMeals = {
+      breakfast: "",
+      lunch: "",
+      dinner: "",
+      snacks: ""
+    };
+
+    let customMeals = {
+      breakfast: "",
+      lunch: "",
+      dinner: "",
+      snacks: ""
+    };
+
+    function todayKey() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function storageKey() {
+      return `meals-widget-${todayKey()}-custom`;
+    }
+
+    function loadStorage() {
+      try {
+        customMeals = JSON.parse(localStorage.getItem(storageKey()) || "{}");
+      } catch {
+        customMeals = {};
+      }
+
+      customMeals = {
+        breakfast: customMeals.breakfast || "",
+        lunch: customMeals.lunch || "",
+        dinner: customMeals.dinner || "",
+        snacks: customMeals.snacks || ""
+      };
+    }
+
+    function saveStorage() {
+      localStorage.setItem(storageKey(), JSON.stringify(customMeals));
+    }
+
+    function cleanMeal(text) {
+      return (text || "")
+        .replace(/meals today/gi, "")
+        .replace(/nothing planned for today/gi, "")
+        .replace(/[•✨✦]/g, "")
+        .trim();
+    }
+
+    function getMeal(type) {
+      return cleanMeal(customMeals[type]) || cleanMeal(apiMeals[type]) || "";
+    }
+
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function foodSVG(type) {
+      const bowls = {
+        breakfast: `
+          <svg class="food-svg" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="25" fill="#FFF8F2"/>
+            <ellipse cx="32" cy="38" rx="22" ry="12" fill="#EFE0D4"/>
+            <ellipse cx="32" cy="34" rx="20" ry="10" fill="#F6E8D8"/>
+            <circle cx="24" cy="32" r="4" fill="#C7776B"/>
+            <circle cx="35" cy="31" r="4" fill="#B66E65"/>
+            <circle cx="43" cy="36" r="3.5" fill="#D6A061"/>
+            <path d="M22 38C28 41 37 41 44 38" stroke="#A7A77F" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        `,
+        lunch: `
+          <svg class="food-svg" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="25" fill="#FFF8F2"/>
+            <ellipse cx="32" cy="38" rx="23" ry="13" fill="#EAD8CC"/>
+            <ellipse cx="32" cy="34" rx="21" ry="11" fill="#CF7F58"/>
+            <circle cx="24" cy="34" r="4" fill="#678A58"/>
+            <circle cx="36" cy="31" r="4" fill="#8EA56B"/>
+            <circle cx="45" cy="36" r="3" fill="#F4DFB1"/>
+            <path d="M19 30C27 35 36 38 48 31" stroke="#EBD0A5" stroke-width="2.5" stroke-linecap="round"/>
+            <path d="M22 40C29 43 38 43 46 39" stroke="#6E8A5E" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        `,
+        dinner: `
+          <svg class="food-svg" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="25" fill="#FFF8F2"/>
+            <ellipse cx="32" cy="39" rx="23" ry="12" fill="#E7D6CA"/>
+            <ellipse cx="32" cy="35" rx="20" ry="10" fill="#C97151"/>
+            <path d="M20 36C27 31 35 31 44 36" stroke="#F2D8A9" stroke-width="3" stroke-linecap="round"/>
+            <path d="M22 39C30 43 38 43 45 39" stroke="#5F7F56" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="28" cy="32" r="3" fill="#F0CFA0"/>
+            <circle cx="40" cy="35" r="3" fill="#8EA56B"/>
+          </svg>
+        `,
+        snacks: `
+          <svg class="food-svg" viewBox="0 0 64 64" fill="none">
+            <circle cx="32" cy="32" r="25" fill="#FFF8F2"/>
+            <ellipse cx="32" cy="40" rx="22" ry="11" fill="#E9DAD1"/>
+            <ellipse cx="32" cy="36" rx="19" ry="9" fill="#F7F1E8"/>
+            <circle cx="23" cy="33" r="4" fill="#D17873"/>
+            <circle cx="34" cy="31" r="4" fill="#C85D68"/>
+            <circle cx="44" cy="35" r="4" fill="#E79D88"/>
+            <path d="M25 40C31 43 38 43 44 40" stroke="#B7AA87" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        `
+      };
+
+      return bowls[type] || bowls.lunch;
+    }
+
+    function renderMealRow(label, type) {
+      const value = getMeal(type);
+
+      return `
+        <div class="meal-row">
+          <div>
+            <div class="meal-label">${label}</div>
+            <div class="meal-name ${value ? "" : "empty"}">
+              ${value ? escapeHTML(value) : "Not planned"}
+            </div>
+          </div>
+
+          <div class="food-img">
+            ${foodSVG(type)}
+          </div>
+        </div>
+      `;
+    }
+
+    function render() {
+      const content = document.getElementById("content");
+
+      content.innerHTML = `
+        <div class="meal-list">
+          ${renderMealRow("Breakfast", "breakfast")}
+          ${renderMealRow("Lunch", "lunch")}
+          ${renderMealRow("Dinner", "dinner")}
+          ${renderMealRow("Snacks", "snacks")}
+        </div>
+      `;
+    }
+
+    function openEdit() {
+      document.getElementById("overlay").classList.add("open");
+      document.getElementById("breakfastInput").value = getMeal("breakfast");
+      document.getElementById("lunchInput").value = getMeal("lunch");
+      document.getElementById("dinnerInput").value = getMeal("dinner");
+      document.getElementById("snacksInput").value = getMeal("snacks");
+    }
+
+    function closeEdit() {
+      document.getElementById("overlay").classList.remove("open");
+    }
+
+    function saveCustom() {
+      customMeals.breakfast = document.getElementById("breakfastInput").value.trim();
+      customMeals.lunch = document.getElementById("lunchInput").value.trim();
+      customMeals.dinner = document.getElementById("dinnerInput").value.trim();
+      customMeals.snacks = document.getElementById("snacksInput").value.trim();
+
+      saveStorage();
+      render();
+    }
+
+    function clearCustom() {
+      customMeals = {
+        breakfast: "",
+        lunch: "",
+        dinner: "",
+        snacks: ""
+      };
+
+      localStorage.removeItem(storageKey());
+
+      document.getElementById("breakfastInput").value = "";
+      document.getElementById("lunchInput").value = "";
+      document.getElementById("dinnerInput").value = "";
+      document.getElementById("snacksInput").value = "";
+
+      render();
+    }
+
+    async function loadMeals() {
+      loadStorage();
+
+      try {
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+          throw new Error("Could not load dashboard data.");
+        }
+
+        const data = await response.json();
+
+        apiMeals = {
+          breakfast: data.breakfast || "",
+          lunch: data.lunch || "",
+          dinner: data.dinner || "",
+          snacks: data.snacks || ""
+        };
+
+        render();
+      } catch (error) {
+        document.getElementById("content").innerHTML = `<div class="error">Could not load meals.</div>`;
+        console.error(error);
+      }
+    }
+
+    document.addEventListener("keydown", function(event) {
+      const overlayOpen = document.getElementById("overlay").classList.contains("open");
+
+      if (!overlayOpen) return;
+
+      if (event.key === "Escape") {
+        closeEdit();
+      }
+
+      if (event.key === "Enter") {
+        saveCustom();
+      }
+    });
+
+    loadMeals();
+  </script>
+</body>
+</html>
