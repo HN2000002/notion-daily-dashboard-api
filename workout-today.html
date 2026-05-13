@@ -16,8 +16,7 @@
       --sage-dark: #8d977c;
       --blush: #f3e6df;
       --cream: #fffaf6;
-      --soft-pink: #e8cbc2;
-      --shadow: rgba(95, 84, 73, 0.06);
+      --soft-pink: #ead7d1;
     }
 
     * {
@@ -55,15 +54,15 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 28px;
+      margin-bottom: 22px;
       position: relative;
       z-index: 2;
     }
 
     .icon {
-      width: 22px;
-      height: 22px;
-      color: var(--muted);
+      width: 20px;
+      height: 20px;
+      color: #b4a594;
       flex-shrink: 0;
     }
 
@@ -79,155 +78,80 @@
     .content {
       position: relative;
       z-index: 2;
-      width: 58%;
+      width: 52%;
+      min-height: 138px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
     }
 
     .workout-name {
       font-family: "Playfair Display", Georgia, serif;
-      font-size: 27px;
+      font-size: 25px;
       line-height: 1.02;
       font-weight: 500;
       color: #4d4038;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       letter-spacing: -0.02em;
     }
 
     .duration {
       font-size: 13px;
-      font-weight: 500;
-      color: #7d6e62;
+      font-weight: 600;
+      color: #8d7d70;
+      margin-top: 2px;
     }
 
     .status {
       font-family: "Playfair Display", Georgia, serif;
-      font-size: 23px;
-      line-height: 1.08;
+      font-size: 24px;
+      line-height: 1.04;
       color: #4d4038;
       margin-top: 4px;
+      max-width: 150px;
     }
 
     .status-note {
       font-size: 13px;
-      line-height: 1.45;
-      color: var(--muted);
+      line-height: 1.5;
+      color: #a89688;
       margin-top: 12px;
-      max-width: 150px;
+      max-width: 160px;
     }
 
-    .illustration {
+    .photo-wrap {
       position: absolute;
-      right: 18px;
-      bottom: 23px;
-      width: 124px;
-      height: 118px;
+      right: 10px;
+      bottom: 14px;
+      width: 138px;
+      height: 138px;
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
       z-index: 1;
+      pointer-events: none;
     }
 
-    .bottle {
+    .photo-bg {
       position: absolute;
-      right: 22px;
-      bottom: 28px;
-      width: 36px;
-      height: 86px;
-      border-radius: 14px 14px 10px 10px;
-      background: linear-gradient(180deg, #ead1ca 0%, #d4a99f 100%);
-      box-shadow: 0 7px 14px var(--shadow);
-    }
-
-    .bottle::before {
-      content: "";
-      position: absolute;
-      top: -10px;
-      left: 9px;
-      width: 18px;
-      height: 12px;
-      border-radius: 5px 5px 2px 2px;
-      background: #8b786d;
-    }
-
-    .bottle::after {
-      content: "";
-      position: absolute;
-      top: 14px;
-      left: 8px;
-      width: 20px;
-      height: 46px;
-      border-radius: 999px;
-      background: rgba(255, 255, 255, 0.16);
-    }
-
-    .mat {
-      position: absolute;
-      left: 5px;
-      bottom: 10px;
-      width: 80px;
-      height: 30px;
-      border-radius: 999px;
-      background: #d8b2aa;
-      transform: rotate(-16deg);
-      box-shadow: 0 8px 14px var(--shadow);
-    }
-
-    .mat::before {
-      content: "";
-      position: absolute;
-      left: -2px;
-      top: 2px;
-      width: 31px;
-      height: 31px;
-      border-radius: 999px;
-      background: radial-gradient(circle at center, #f5e8e2 0 28%, #cfa49c 30% 100%);
-      box-shadow: inset 0 0 0 1px rgba(123, 94, 84, 0.08);
-    }
-
-    .dumbbell {
-      position: absolute;
-      left: 60px;
-      bottom: 2px;
-      width: 38px;
-      height: 18px;
-      transform: rotate(-10deg);
-    }
-
-    .dumbbell::before,
-    .dumbbell::after {
-      content: "";
-      position: absolute;
-      top: 1px;
-      width: 17px;
-      height: 17px;
-      border-radius: 999px;
-      background: #ead8d0;
-      box-shadow: 0 4px 8px var(--shadow);
-    }
-
-    .dumbbell::before {
-      left: 0;
-    }
-
-    .dumbbell::after {
-      right: 0;
-    }
-
-    .bar {
-      position: absolute;
-      top: 7px;
-      left: 12px;
-      width: 16px;
-      height: 5px;
-      border-radius: 999px;
-      background: #d2b4aa;
-    }
-
-    .soft-blob {
-      position: absolute;
-      right: -28px;
-      bottom: -32px;
-      width: 150px;
-      height: 150px;
-      border-radius: 999px;
-      background: rgba(243, 230, 223, 0.42);
+      right: -18px;
+      bottom: -24px;
+      width: 170px;
+      height: 120px;
+      border-radius: 999px 999px 0 0;
+      background: rgba(238, 228, 223, 0.72);
       z-index: 0;
+    }
+
+    .photo {
+      position: relative;
+      z-index: 2;
+      width: 126px;
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 8px 10px rgba(95, 84, 73, 0.08));
     }
 
     .edit-btn {
@@ -255,7 +179,7 @@
       display: none;
       position: absolute;
       inset: 0;
-      background: rgba(255, 253, 251, 0.96);
+      background: rgba(255, 253, 251, 0.97);
       backdrop-filter: blur(3px);
       border-radius: 18px;
       padding: 18px;
@@ -302,6 +226,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .small-btn {
@@ -332,8 +257,6 @@
 
 <body>
   <div class="card">
-    <div class="soft-blob"></div>
-
     <div class="top">
       <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path d="M5 9V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
@@ -352,12 +275,13 @@
       <div class="loading">Loading workout…</div>
     </div>
 
-    <div class="illustration" aria-hidden="true">
-      <div class="bottle"></div>
-      <div class="mat"></div>
-      <div class="dumbbell">
-        <div class="bar"></div>
-      </div>
+    <div class="photo-wrap" aria-hidden="true">
+      <div class="photo-bg"></div>
+      <img
+        class="photo"
+        src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=600&q=80"
+        alt=""
+      />
     </div>
 
     <button class="edit-btn" onclick="openEdit()">Edit</button>
@@ -368,6 +292,7 @@
       <div class="input-stack">
         <input id="workoutInput" placeholder="e.g. Lower Body Workout">
         <input id="durationInput" placeholder="e.g. 45 min">
+        <input id="photoInput" placeholder="Paste image URL here">
       </div>
 
       <div class="actions">
@@ -384,6 +309,7 @@
     let apiWorkout = "";
     let customWorkout = "";
     let customDuration = "";
+    let customPhoto = "";
 
     function todayKey() {
       return new Date().toISOString().split("T")[0];
@@ -402,18 +328,19 @@
     }
 
     function titleCaseFallback(text) {
-      const cleaned = tidyWorkout(text);
-      return cleaned || "";
+      return tidyWorkout(text) || "";
     }
 
     function loadStorage() {
       customWorkout = localStorage.getItem(storageKey("customWorkout")) || "";
       customDuration = localStorage.getItem(storageKey("customDuration")) || "";
+      customPhoto = localStorage.getItem(storageKey("customPhoto")) || "";
     }
 
     function saveStorage() {
       localStorage.setItem(storageKey("customWorkout"), customWorkout);
       localStorage.setItem(storageKey("customDuration"), customDuration);
+      localStorage.setItem(storageKey("customPhoto"), customPhoto);
     }
 
     function getDisplayWorkout() {
@@ -424,9 +351,16 @@
       return customDuration || "45 min";
     }
 
+    function getDisplayPhoto() {
+      return customPhoto || "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=600&q=80";
+    }
+
     function render() {
       const content = document.getElementById("content");
       const workout = getDisplayWorkout();
+      const photo = document.querySelector(".photo");
+
+      photo.src = getDisplayPhoto();
 
       if (!workout) {
         content.innerHTML = `
@@ -455,6 +389,7 @@
       document.getElementById("overlay").classList.add("open");
       document.getElementById("workoutInput").value = getDisplayWorkout();
       document.getElementById("durationInput").value = customDuration || "45 min";
+      document.getElementById("photoInput").value = customPhoto || "";
     }
 
     function closeEdit() {
@@ -464,6 +399,8 @@
     function saveCustom() {
       customWorkout = document.getElementById("workoutInput").value.trim();
       customDuration = document.getElementById("durationInput").value.trim();
+      customPhoto = document.getElementById("photoInput").value.trim();
+
       saveStorage();
       render();
     }
@@ -471,10 +408,16 @@
     function clearCustom() {
       customWorkout = "";
       customDuration = "";
+      customPhoto = "";
+
       localStorage.removeItem(storageKey("customWorkout"));
       localStorage.removeItem(storageKey("customDuration"));
+      localStorage.removeItem(storageKey("customPhoto"));
+
       document.getElementById("workoutInput").value = titleCaseFallback(apiWorkout);
       document.getElementById("durationInput").value = "45 min";
+      document.getElementById("photoInput").value = "";
+
       render();
     }
 
@@ -499,15 +442,15 @@
     }
 
     document.getElementById("workoutInput").addEventListener("keydown", function(event) {
-      if (event.key === "Enter") {
-        saveCustom();
-      }
+      if (event.key === "Enter") saveCustom();
     });
 
     document.getElementById("durationInput").addEventListener("keydown", function(event) {
-      if (event.key === "Enter") {
-        saveCustom();
-      }
+      if (event.key === "Enter") saveCustom();
+    });
+
+    document.getElementById("photoInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") saveCustom();
     });
 
     loadWorkoutWidget();
