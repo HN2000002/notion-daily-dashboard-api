@@ -68,6 +68,25 @@ function getPropertyText(property) {
   }
 }
 
+async function getDeepPropertyText(pageId, property) {
+  if (!property?.id) return getPropertyText(property);
+
+  try {
+    const response = await notion.pages.properties.retrieve({
+      page_id: pageId,
+      property_id: property.id,
+    });
+
+    if (response.object === "list" && Array.isArray(response.results)) {
+      return response.results.map(getPropertyText).filter(Boolean).join(", ");
+    }
+
+    return getPropertyText(response);
+  } catch (error) {
+    return getPropertyText(property);
+  }
+}
+
 function getTodayISO() {
   return new Date().toISOString().split("T")[0];
 }
@@ -131,6 +150,69 @@ async function getTodayDashboard(today) {
   };
 }
 
+async function buildMealData(page, today) {
+  const p = page.properties;
+  const pageId = page.id;
+
+  const formula = getPropertyText(p["Formula"]);
+
+  const breakfastDirect = getPropertyText(p["Breakfast"]);
+  const lunchDirect = getPropertyText(p["Lunch"]);
+  const dinnerDirect = getPropertyText(p["Dinner"]);
+  const snacksDirect = getPropertyText(p["Snacks"]);
+
+  const todayBreakfastDeep = await getDeepPropertyText(pageId, p["Today Breakfast"]);
+  const todayLunchDeep = await getDeepPropertyText(pageId, p["Today Lunch"]);
+  const todayDinnerDeep = await getDeepPropertyText(pageId, p["Today Dinner"]);
+
+  const breakfast =
+    cleanText(breakfastDirect) ||
+    cleanText(todayBreakfastDeep) ||
+    extractLine(formula, "Breakfast") ||
+    "";
+
+  const lunch =
+    cleanText(lunchDirect) ||
+    cleanText(todayLunchDeep) ||
+    extractLine(formula, "Lunch") ||
+    "";
+
+  const dinner =
+    cleanText(dinnerDirect) ||
+    cleanText(todayDinnerDeep) ||
+    extractLine(formula, "Dinner") ||
+    "";
+
+  const snacks =
+    cleanText(snacksDirect) ||
+    extractLine(formula, "Snacks") ||
+    "";
+
+  const score = [breakfast, lunch, dinner, snacks].filter(Boolean).join(" ").length;
+
+  return {
+    mealPageId: page.id,
+    name: getPropertyText(p["Name"]),
+    date: getPropertyText(p["Date"]),
+    breakfast,
+    lunch,
+    dinner,
+    snacks,
+    score,
+    debug: {
+      formula,
+      breakfastDirect,
+      lunchDirect,
+      dinnerDirect,
+      snacksDirect,
+      todayBreakfastDeep,
+      todayLunchDeep,
+      todayDinnerDeep,
+      availableMealProperties: Object.keys(p),
+    },
+  };
+}
+
 async function getTodayMeals(today) {
   const databaseId = process.env.MEAL_PLAN_DATABASE_ID;
 
@@ -147,12 +229,22 @@ async function getTodayMeals(today) {
   const response = await notion.databases.query({
     database_id: databaseId,
     filter: {
-      property: "Date",
-      date: {
-        equals: today,
-      },
+      or: [
+        {
+          property: "Date",
+          date: {
+            equals: today,
+          },
+        },
+        {
+          property: "Is Today",
+          checkbox: {
+            equals: true,
+          },
+        },
+      ],
     },
-    page_size: 1,
+    page_size: 10,
   });
 
   if (!response.results.length) {
@@ -165,39 +257,35 @@ async function getTodayMeals(today) {
     };
   }
 
-  const page = response.results[0];
-  const p = page.properties;
+  const candidates = await Promise.all(
+    response.results.map((page) => buildMealData(page, today))
+  );
 
-  const formula = getPropertyText(p["Formula"]);
+  candidates.sort((a, b) => b.score - a.score);
+
+  const best = candidates[0];
 
   return {
-    breakfast:
-      getPropertyText(p["Breakfast"]) ||
-      getPropertyText(p["Today Breakfast"]) ||
-      extractLine(formula, "Breakfast") ||
-      "",
-
-    lunch:
-      getPropertyText(p["Lunch"]) ||
-      getPropertyText(p["Today Lunch"]) ||
-      extractLine(formula, "Lunch") ||
-      "",
-
-    dinner:
-      getPropertyText(p["Dinner"]) ||
-      getPropertyText(p["Today Dinner"]) ||
-      extractLine(formula, "Dinner") ||
-      "",
-
-    snacks:
-      getPropertyText(p["Snacks"]) ||
-      extractLine(formula, "Snacks") ||
-      "",
-
+    breakfast: best.breakfast,
+    lunch: best.lunch,
+    dinner: best.dinner,
+    snacks: best.snacks,
     debug: {
-      mealPageId: page.id,
-      formula,
-      availableMealProperties: Object.keys(p),
+      chosenMealPageId: best.mealPageId,
+      chosenMealName: best.name,
+      chosenMealDate: best.date,
+      chosenMealScore: best.score,
+      allMealRows: candidates.map((item) => ({
+        mealPageId: item.mealPageId,
+        name: item.name,
+        date: item.date,
+        score: item.score,
+        breakfast: item.breakfast,
+        lunch: item.lunch,
+        dinner: item.dinner,
+        snacks: item.snacks,
+      })),
+      chosenRaw: best.debug,
     },
   };
 }
