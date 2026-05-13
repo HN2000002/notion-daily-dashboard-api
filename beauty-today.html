@@ -38,7 +38,7 @@
 
     .card {
       width: 100%;
-      max-width: 320px;
+      max-width: 100%;
       min-height: 225px;
       margin: 0 auto;
       background: var(--card);
@@ -214,6 +214,7 @@
       font-size: 13px;
       color: var(--text);
       outline: none;
+      min-width: 0;
     }
 
     input:focus {
@@ -231,6 +232,7 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       cursor: pointer;
+      white-space: nowrap;
     }
 
     .custom-list {
