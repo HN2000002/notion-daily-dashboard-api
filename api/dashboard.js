@@ -76,6 +76,11 @@ function cleanText(text = "") {
   return text
     .replace(/\n+/g, "\n")
     .replace(/[•✦✨]/g, "")
+    .replace(/Beauty Today/g, "")
+    .replace(/Workout/g, "")
+    .replace(/Meals Today/g, "")
+    .replace(/Nothing planned for today/gi, "")
+    .replace(/Nothing right now/gi, "")
     .trim();
 }
 
@@ -83,6 +88,87 @@ function extractLine(text, label) {
   const regex = new RegExp(`${label}:\\s*([^\\n]+)`, "i");
   const match = text.match(regex);
   return match ? match[1].trim() : "";
+}
+
+function buildDashboardData(page, today) {
+  const p = page.properties;
+
+  const dayTitle = getPropertyText(p["Day"]);
+  const greeting = getPropertyText(p["Greeting"]);
+
+  const mealPlanAssistant = getPropertyText(p["Meal Plan Assistant"]);
+  const beautyTodayFormula = getPropertyText(p["Beauty Today"]);
+  const workoutFormula = getPropertyText(p["Workout Formula"]);
+  const cycleFormula = getPropertyText(p["Cycle Phase Formula"]);
+
+  const breakfast =
+    extractLine(mealPlanAssistant, "Breakfast") ||
+    getPropertyText(p["Today Breakfast"]) ||
+    "";
+
+  const lunch =
+    extractLine(mealPlanAssistant, "Lunch") ||
+    getPropertyText(p["Today Lunch"]) ||
+    "";
+
+  const dinner =
+    extractLine(mealPlanAssistant, "Dinner") ||
+    getPropertyText(p["Today Dinner"]) ||
+    "";
+
+  const beautyToday =
+    cleanText(beautyTodayFormula) ||
+    cleanText(getPropertyText(p["Beauty Now"])) ||
+    "Nothing right now";
+
+  const workout =
+    cleanText(workoutFormula) ||
+    cleanText(getPropertyText(p["Today Workout"])) ||
+    "Nothing planned for today";
+
+  const currentPhase =
+    getPropertyText(p["Current Phase"]) ||
+    cleanText(cycleFormula) ||
+    "";
+
+  const stream =
+    getPropertyText(p["Stream Today"]) ||
+    getPropertyText(p["Stream Now"]) ||
+    "";
+
+  const score = [
+    breakfast,
+    lunch,
+    dinner,
+    beautyToday !== "Nothing right now" ? beautyToday : "",
+    workout !== "Nothing planned for today" ? workout : "",
+    currentPhase,
+    stream,
+  ].filter(Boolean).join(" ").length;
+
+  return {
+    date: today,
+    pageId: page.id,
+    dayTitle,
+    greeting,
+    currentPhase,
+    beautyToday,
+    breakfast,
+    lunch,
+    dinner,
+    workout,
+    stream,
+    score,
+    debug: {
+      mealPlanAssistant,
+      beautyTodayFormula,
+      workoutFormula,
+      cycleFormula,
+      todayBreakfastRaw: getPropertyText(p["Today Breakfast"]),
+      todayLunchRaw: getPropertyText(p["Today Lunch"]),
+      todayDinnerRaw: getPropertyText(p["Today Dinner"]),
+    },
+  };
 }
 
 module.exports = async function handler(req, res) {
@@ -113,7 +199,7 @@ module.exports = async function handler(req, res) {
           equals: today,
         },
       },
-      page_size: 1,
+      page_size: 10,
     });
 
     if (!response.results.length) {
@@ -123,70 +209,38 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const page = response.results[0];
-    const p = page.properties;
+    const candidates = response.results.map((page) => buildDashboardData(page, today));
 
-    const mealPlanAssistant = getPropertyText(p["Meal Plan Assistant"]);
-    const beautyTodayFormula = getPropertyText(p["Beauty Today"]);
-    const workoutFormula = getPropertyText(p["Workout Formula"]);
-    const cycleFormula = getPropertyText(p["Cycle Phase Formula"]);
+    candidates.sort((a, b) => b.score - a.score);
+
+    const best = candidates[0];
 
     const data = {
-      date: today,
-
-      greeting: getPropertyText(p["Greeting"]),
-
-      currentPhase:
-        getPropertyText(p["Current Phase"]) ||
-        cleanText(cycleFormula) ||
-        "",
-
-      beautyToday:
-        cleanText(beautyTodayFormula)
-          .replace("Beauty Today", "")
-          .trim() || "Nothing right now",
-
-      breakfast:
-        extractLine(mealPlanAssistant, "Breakfast") ||
-        getPropertyText(p["Today Breakfast"]) ||
-        "",
-
-      lunch:
-        extractLine(mealPlanAssistant, "Lunch") ||
-        getPropertyText(p["Today Lunch"]) ||
-        "",
-
-      dinner:
-        extractLine(mealPlanAssistant, "Dinner") ||
-        getPropertyText(p["Today Dinner"]) ||
-        "",
-
-      workout:
-        cleanText(workoutFormula)
-          .replace("Workout", "")
-          .trim() || "Nothing planned for today",
-
-      stream:
-        getPropertyText(p["Stream Today"]) ||
-        getPropertyText(p["Stream Now"]) ||
-        "",
+      date: best.date,
+      greeting: best.greeting,
+      currentPhase: best.currentPhase,
+      beautyToday: best.beautyToday,
+      breakfast: best.breakfast,
+      lunch: best.lunch,
+      dinner: best.dinner,
+      workout: best.workout,
+      stream: best.stream,
 
       debug: {
-        mealPlanAssistant,
-        beautyTodayFormula,
-        workoutFormula,
-        cycleFormula,
-        todayBreakfastRaw: getPropertyText(p["Today Breakfast"]),
-        todayLunchRaw: getPropertyText(p["Today Lunch"]),
-        todayDinnerRaw: getPropertyText(p["Today Dinner"]),
-      },
-
-      raw: {
-        pageId: page.id,
-        availableProperties: Object.keys(p),
-        propertyTypes: Object.fromEntries(
-          Object.entries(p).map(([name, property]) => [name, property.type])
-        ),
+        chosenPageId: best.pageId,
+        chosenDayTitle: best.dayTitle,
+        chosenScore: best.score,
+        allTodayRows: candidates.map((item) => ({
+          pageId: item.pageId,
+          dayTitle: item.dayTitle,
+          score: item.score,
+          breakfast: item.breakfast,
+          lunch: item.lunch,
+          dinner: item.dinner,
+          beautyToday: item.beautyToday,
+          workout: item.workout,
+        })),
+        chosenRaw: best.debug,
       },
     };
 
