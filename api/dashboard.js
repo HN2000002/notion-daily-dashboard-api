@@ -5,7 +5,19 @@ const notion = new Client({
 });
 
 function getPlainText(richText = []) {
-  return richText.map((t) => t.plain_text).join("");
+  return richText.map((t) => t.plain_text || "").join("");
+}
+
+function getPageTitle(page) {
+  if (!page || !page.properties) return "";
+
+  const titleProperty = Object.values(page.properties).find(
+    (property) => property.type === "title"
+  );
+
+  if (!titleProperty) return "";
+
+  return getPlainText(titleProperty.title);
 }
 
 function getFormulaValue(property) {
@@ -21,7 +33,7 @@ function getFormulaValue(property) {
   return "";
 }
 
-function getPropertyText(property) {
+function getBasicPropertyText(property) {
   if (!property) return "";
 
   switch (property.type) {
@@ -43,17 +55,6 @@ function getPropertyText(property) {
     case "formula":
       return getFormulaValue(property);
 
-    case "rollup":
-      if (property.rollup.type === "array") {
-        return property.rollup.array.map(getPropertyText).filter(Boolean).join(", ");
-      }
-      if (property.rollup.type === "number") return String(property.rollup.number ?? "");
-      if (property.rollup.type === "date") return property.rollup.date?.start || "";
-      return "";
-
-    case "relation":
-      return property.relation?.length ? `${property.relation.length} linked` : "";
-
     case "multi_select":
       return property.multi_select?.map((item) => item.name).join(", ") || "";
 
@@ -63,13 +64,88 @@ function getPropertyText(property) {
     case "number":
       return String(property.number ?? "");
 
+    case "url":
+      return property.url || "";
+
+    case "email":
+      return property.email || "";
+
+    case "phone_number":
+      return property.phone_number || "";
+
+    case "relation":
+      if (Array.isArray(property.relation)) {
+        return property.relation.length ? `${property.relation.length} linked` : "";
+      }
+      if (property.relation?.id) {
+        return "1 linked";
+      }
+      return "";
+
+    case "rollup":
+      if (property.rollup.type === "array") {
+        return property.rollup.array.map(getBasicPropertyText).filter(Boolean).join(", ");
+      }
+      if (property.rollup.type === "number") return String(property.rollup.number ?? "");
+      if (property.rollup.type === "date") return property.rollup.date?.start || "";
+      return "";
+
     default:
       return "";
   }
 }
 
+async function resolveRelationTitles(property) {
+  if (!property) return "";
+
+  const relationItems = Array.isArray(property.relation)
+    ? property.relation
+    : property.relation?.id
+      ? [property.relation]
+      : [];
+
+  if (!relationItems.length) return "";
+
+  const titles = [];
+
+  for (const item of relationItems) {
+    try {
+      const page = await notion.pages.retrieve({ page_id: item.id });
+      const title = getPageTitle(page);
+      if (title) titles.push(title);
+    } catch (error) {
+      // Ignore inaccessible relation pages
+    }
+  }
+
+  return titles.join(", ");
+}
+
 async function getDeepPropertyText(pageId, property) {
-  if (!property?.id) return getPropertyText(property);
+  if (!property) return "";
+
+  if (property.type === "relation") {
+    const relationTitles = await resolveRelationTitles(property);
+    return relationTitles || getBasicPropertyText(property);
+  }
+
+  if (property.type === "rollup" && property.rollup.type === "array") {
+    const parts = [];
+
+    for (const item of property.rollup.array) {
+      if (item.type === "relation") {
+        const relationTitles = await resolveRelationTitles(item);
+        if (relationTitles) parts.push(relationTitles);
+      } else {
+        const text = getBasicPropertyText(item);
+        if (text) parts.push(text);
+      }
+    }
+
+    if (parts.length) return parts.join(", ");
+  }
+
+  if (!property.id || !pageId) return getBasicPropertyText(property);
 
   try {
     const response = await notion.pages.properties.retrieve({
@@ -78,12 +154,29 @@ async function getDeepPropertyText(pageId, property) {
     });
 
     if (response.object === "list" && Array.isArray(response.results)) {
-      return response.results.map(getPropertyText).filter(Boolean).join(", ");
+      const parts = [];
+
+      for (const item of response.results) {
+        if (item.type === "relation") {
+          const relationTitles = await resolveRelationTitles(item);
+          if (relationTitles) parts.push(relationTitles);
+        } else {
+          const text = getBasicPropertyText(item);
+          if (text) parts.push(text);
+        }
+      }
+
+      return parts.join(", ");
     }
 
-    return getPropertyText(response);
+    if (response.type === "relation") {
+      const relationTitles = await resolveRelationTitles(response);
+      return relationTitles || getBasicPropertyText(response);
+    }
+
+    return getBasicPropertyText(response);
   } catch (error) {
-    return getPropertyText(property);
+    return getBasicPropertyText(property);
   }
 }
 
@@ -100,6 +193,7 @@ function cleanText(text = "") {
     .replace(/Meals Today/g, "")
     .replace(/Nothing planned for today/gi, "")
     .replace(/Nothing right now/gi, "")
+    .replace(/\d+ linked/gi, "")
     .trim();
 }
 
@@ -128,38 +222,46 @@ async function getTodayDashboard(today) {
   const page = response.results[0];
   const p = page.properties;
 
+  const beautyNow = await getDeepPropertyText(page.id, p["Beauty Now"]);
+  const todayWorkout = await getDeepPropertyText(page.id, p["Today Workout"]);
+  const currentPhase = await getDeepPropertyText(page.id, p["Current Phase"]);
+
   return {
     pageId: page.id,
-    greeting: getPropertyText(p["Greeting"]),
+    greeting: getBasicPropertyText(p["Greeting"]),
+
     beautyToday:
-      cleanText(getPropertyText(p["Beauty Today"])) ||
-      cleanText(getPropertyText(p["Beauty Now"])) ||
+      cleanText(getBasicPropertyText(p["Beauty Today"])) ||
+      cleanText(beautyNow) ||
       "Nothing right now",
+
     workout:
-      cleanText(getPropertyText(p["Workout Formula"])) ||
-      cleanText(getPropertyText(p["Today Workout"])) ||
+      cleanText(getBasicPropertyText(p["Workout Formula"])) ||
+      cleanText(todayWorkout) ||
       "Nothing planned for today",
+
     currentPhase:
-      getPropertyText(p["Current Phase"]) ||
-      cleanText(getPropertyText(p["Cycle Phase Formula"])) ||
+      cleanText(currentPhase) ||
+      cleanText(getBasicPropertyText(p["Cycle Phase Formula"])) ||
       "",
+
     stream:
-      getPropertyText(p["Stream Today"]) ||
-      getPropertyText(p["Stream Now"]) ||
+      getBasicPropertyText(p["Stream Today"]) ||
+      getBasicPropertyText(p["Stream Now"]) ||
       "",
   };
 }
 
-async function buildMealData(page, today) {
+async function buildMealData(page) {
   const p = page.properties;
   const pageId = page.id;
 
-  const formula = getPropertyText(p["Formula"]);
+  const formula = getBasicPropertyText(p["Formula"]);
 
-  const breakfastDirect = getPropertyText(p["Breakfast"]);
-  const lunchDirect = getPropertyText(p["Lunch"]);
-  const dinnerDirect = getPropertyText(p["Dinner"]);
-  const snacksDirect = getPropertyText(p["Snacks"]);
+  const breakfastDirect = await getDeepPropertyText(pageId, p["Breakfast"]);
+  const lunchDirect = await getDeepPropertyText(pageId, p["Lunch"]);
+  const dinnerDirect = await getDeepPropertyText(pageId, p["Dinner"]);
+  const snacksDirect = await getDeepPropertyText(pageId, p["Snacks"]);
 
   const todayBreakfastDeep = await getDeepPropertyText(pageId, p["Today Breakfast"]);
   const todayLunchDeep = await getDeepPropertyText(pageId, p["Today Lunch"]);
@@ -192,8 +294,8 @@ async function buildMealData(page, today) {
 
   return {
     mealPageId: page.id,
-    name: getPropertyText(p["Name"]),
-    date: getPropertyText(p["Date"]),
+    name: getBasicPropertyText(p["Name"]),
+    date: getBasicPropertyText(p["Date"]),
     breakfast,
     lunch,
     dinner,
@@ -208,6 +310,9 @@ async function buildMealData(page, today) {
       todayBreakfastDeep,
       todayLunchDeep,
       todayDinnerDeep,
+      propertyTypes: Object.fromEntries(
+        Object.entries(p).map(([name, property]) => [name, property.type])
+      ),
       availableMealProperties: Object.keys(p),
     },
   };
@@ -258,7 +363,7 @@ async function getTodayMeals(today) {
   }
 
   const candidates = await Promise.all(
-    response.results.map((page) => buildMealData(page, today))
+    response.results.map((page) => buildMealData(page))
   );
 
   candidates.sort((a, b) => b.score - a.score);
