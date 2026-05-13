@@ -51,6 +51,18 @@ function getPropertyText(property) {
     case "checkbox":
       return property.checkbox ? "Yes" : "No";
 
+    case "number":
+      return String(property.number ?? "");
+
+    case "url":
+      return property.url || "";
+
+    case "email":
+      return property.email || "";
+
+    case "phone_number":
+      return property.phone_number || "";
+
     default:
       return "";
   }
@@ -103,16 +115,58 @@ module.exports = async function handler(req, res) {
 
     const data = {
       date: today,
-      greeting: getPropertyText(p["Greeting"]),
-      currentPhase: getPropertyText(p["Current Phase"]) || getPropertyText(p["Cycle Phase Formula"]),
-      beautyToday: getPropertyText(p["Beauty Now"]) || getPropertyText(p["Today’s Beauty"]) || getPropertyText(p["Today's Beauty"]),
-      breakfast: getPropertyText(p["Today Breakfast"]),
-      lunch: getPropertyText(p["Today Lunch"]),
-      dinner: getPropertyText(p["Today Dinner"]),
-      workout: getPropertyText(p["Workout Formula"]) || getPropertyText(p["Today Workout"]),
-      stream: getPropertyText(p["Stream Now"]) || getPropertyText(p["Stream Today"]),
+
+      greeting:
+        getPropertyText(p["Greeting"]) ||
+        getPropertyText(p["Good Morning"]) ||
+        "",
+
+      currentPhase:
+        getPropertyText(p["Current Phase"]) ||
+        getPropertyText(p["Cycle Phase"]) ||
+        getPropertyText(p["Cycle Phase Formula"]) ||
+        "",
+
+      beautyToday:
+        getPropertyText(p["Beauty Now"]) ||
+        getPropertyText(p["Beauty Today"]) ||
+        getPropertyText(p["Today’s Beauty"]) ||
+        getPropertyText(p["Today's Beauty"]) ||
+        "",
+
+      breakfast:
+        getPropertyText(p["Today Breakfast"]) ||
+        getPropertyText(p["Breakfast"]) ||
+        "",
+
+      lunch:
+        getPropertyText(p["Today Lunch"]) ||
+        getPropertyText(p["Lunch"]) ||
+        "",
+
+      dinner:
+        getPropertyText(p["Today Dinner"]) ||
+        getPropertyText(p["Dinner"]) ||
+        "",
+
+      workout:
+        getPropertyText(p["Workout Formula"]) ||
+        getPropertyText(p["Today Workout"]) ||
+        getPropertyText(p["Workout"]) ||
+        "",
+
+      stream:
+        getPropertyText(p["Stream Now"]) ||
+        getPropertyText(p["Stream Today"]) ||
+        getPropertyText(p["Stream"]) ||
+        "",
+
       raw: {
         pageId: page.id,
+        availableProperties: Object.keys(p),
+        propertyTypes: Object.fromEntries(
+          Object.entries(p).map(([name, property]) => [name, property.type])
+        ),
       },
     };
 
