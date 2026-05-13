@@ -54,15 +54,6 @@ function getPropertyText(property) {
     case "number":
       return String(property.number ?? "");
 
-    case "url":
-      return property.url || "";
-
-    case "email":
-      return property.email || "";
-
-    case "phone_number":
-      return property.phone_number || "";
-
     default:
       return "";
   }
@@ -70,6 +61,22 @@ function getPropertyText(property) {
 
 function getTodayISO() {
   return new Date().toISOString().split("T")[0];
+}
+
+function cleanFormulaText(text = "") {
+  return text
+    .replace(/\n+/g, "\n")
+    .replace(/[•✦✨]/g, "")
+    .replace(/Beauty Today/g, "")
+    .replace(/Workout/g, "")
+    .replace(/Meals Today/g, "")
+    .trim();
+}
+
+function extractLine(text, label) {
+  const regex = new RegExp(`${label}:\\s*([^\\n]+)`, "i");
+  const match = text.match(regex);
+  return match ? match[1].trim() : "";
 }
 
 module.exports = async function handler(req, res) {
@@ -113,52 +120,44 @@ module.exports = async function handler(req, res) {
     const page = response.results[0];
     const p = page.properties;
 
+    const mealText = getPropertyText(p["Meal Plan Assistant"]);
+    const beautyText = cleanFormulaText(getPropertyText(p["Beauty Today"]));
+    const workoutText = cleanFormulaText(getPropertyText(p["Workout Formula"]));
+    const cycleText =
+      getPropertyText(p["Current Phase"]) ||
+      getPropertyText(p["Cycle Phase Formula"]) ||
+      getPropertyText(p["Cycle Phase"]) ||
+      "";
+
     const data = {
       date: today,
 
-      greeting:
-        getPropertyText(p["Greeting"]) ||
-        getPropertyText(p["Good Morning"]) ||
-        "",
+      greeting: getPropertyText(p["Greeting"]),
 
-      currentPhase:
-        getPropertyText(p["Current Phase"]) ||
-        getPropertyText(p["Cycle Phase"]) ||
-        getPropertyText(p["Cycle Phase Formula"]) ||
-        "",
+      currentPhase: cleanFormulaText(cycleText),
 
-      beautyToday:
-        getPropertyText(p["Beauty Now"]) ||
-        getPropertyText(p["Beauty Today"]) ||
-        getPropertyText(p["Today’s Beauty"]) ||
-        getPropertyText(p["Today's Beauty"]) ||
-        "",
+      beautyToday: beautyText || "Nothing right now",
 
       breakfast:
         getPropertyText(p["Today Breakfast"]) ||
-        getPropertyText(p["Breakfast"]) ||
+        extractLine(mealText, "Breakfast") ||
         "",
 
       lunch:
         getPropertyText(p["Today Lunch"]) ||
-        getPropertyText(p["Lunch"]) ||
+        extractLine(mealText, "Lunch") ||
         "",
 
       dinner:
         getPropertyText(p["Today Dinner"]) ||
-        getPropertyText(p["Dinner"]) ||
+        extractLine(mealText, "Dinner") ||
         "",
 
-      workout:
-        getPropertyText(p["Workout Formula"]) ||
-        getPropertyText(p["Today Workout"]) ||
-        getPropertyText(p["Workout"]) ||
-        "",
+      workout: workoutText || "Nothing planned for today",
 
       stream:
-        getPropertyText(p["Stream Now"]) ||
         getPropertyText(p["Stream Today"]) ||
-        getPropertyText(p["Stream"]) ||
+        getPropertyText(p["Stream Now"]) ||
         "",
 
       raw: {
