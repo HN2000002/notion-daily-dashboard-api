@@ -52,49 +52,9 @@ async function getDatabasePropertyTypes(databaseId) {
   );
 }
 
-async function findFitnessSessionTrackerPage() {
-  const habitTrackersDatabaseId = process.env.HABIT_TRACKERS_DATABASE_ID;
-
-  if (!habitTrackersDatabaseId) {
-    throw new Error("Missing HABIT_TRACKERS_DATABASE_ID in Vercel.");
-  }
-
-  const response = await notion.databases.query({
-    database_id: habitTrackersDatabaseId,
-    page_size: 100,
-  });
-
-  const pages = response.results || [];
-
-  const titles = pages.map(page => ({
-    id: page.id,
-    title: getTitleFromPage(page),
-  }));
-
-  const exactMatch = pages.find(page =>
-    getTitleFromPage(page).trim().toLowerCase() === "fitness session"
-  );
-
-  const softMatch = pages.find(page =>
-    getTitleFromPage(page).trim().toLowerCase().includes("fitness")
-  );
-
-  const fitnessPage = exactMatch || softMatch;
-
-  if (!fitnessPage) {
-    throw new Error(
-      `Could not find a Habit Trackers page called "Fitness Session". Found: ${titles.map(t => t.title || "(blank)").join(", ")}`
-    );
-  }
-
-  return {
-    page: fitnessPage,
-    foundTitles: titles,
-  };
-}
-
 async function completeWorkoutAction() {
   const habitLogDatabaseId = process.env.HABIT_LOG_DATABASE_ID;
+  const fitnessSessionPageId = process.env.FITNESS_SESSION_TRACKER_PAGE_ID;
 
   if (!process.env.NOTION_TOKEN) {
     throw new Error("Missing NOTION_TOKEN in Vercel.");
@@ -104,17 +64,21 @@ async function completeWorkoutAction() {
     throw new Error("Missing HABIT_LOG_DATABASE_ID in Vercel.");
   }
 
+  if (!fitnessSessionPageId) {
+    throw new Error("Missing FITNESS_SESSION_TRACKER_PAGE_ID in Vercel.");
+  }
+
   const today = getTodayInLondon();
 
-  const { page: fitnessSessionPage, foundTitles } =
-    await findFitnessSessionTrackerPage();
+  const fitnessSessionPage = await notion.pages.retrieve({
+    page_id: fitnessSessionPageId,
+  });
 
-  const fitnessSessionPageId = fitnessSessionPage.id;
   const fitnessSessionTitle = getTitleFromPage(fitnessSessionPage) || "Fitness Session";
 
   const habitLogProperties = await getDatabasePropertyTypes(habitLogDatabaseId);
 
-  const requiredProperties = ["Name", "Completed", "Habit Trackers", "Date", "Hide"];
+  const requiredProperties = ["Name", "Completed", "Habit Trackers", "Date"];
   const missingProperties = requiredProperties.filter(
     propertyName => !(propertyName in habitLogProperties)
   );
@@ -123,26 +87,6 @@ async function completeWorkoutAction() {
     throw new Error(
       `Habit Log is missing these exact properties: ${missingProperties.join(", ")}. Current properties are: ${Object.keys(habitLogProperties).join(", ")}`
     );
-  }
-
-  if (habitLogProperties["Name"] !== "title") {
-    throw new Error(`Habit Log property "Name" must be title, but it is ${habitLogProperties["Name"]}.`);
-  }
-
-  if (habitLogProperties["Completed"] !== "checkbox") {
-    throw new Error(`Habit Log property "Completed" must be checkbox, but it is ${habitLogProperties["Completed"]}.`);
-  }
-
-  if (habitLogProperties["Habit Trackers"] !== "relation") {
-    throw new Error(`Habit Log property "Habit Trackers" must be relation, but it is ${habitLogProperties["Habit Trackers"]}.`);
-  }
-
-  if (habitLogProperties["Date"] !== "date") {
-    throw new Error(`Habit Log property "Date" must be date, but it is ${habitLogProperties["Date"]}.`);
-  }
-
-  if (habitLogProperties["Hide"] !== "checkbox") {
-    throw new Error(`Habit Log property "Hide" must be checkbox, but it is ${habitLogProperties["Hide"]}.`);
   }
 
   const existing = await notion.databases.query({
@@ -175,9 +119,6 @@ async function completeWorkoutAction() {
         "Completed": {
           checkbox: true,
         },
-        "Hide": {
-          checkbox: true,
-        },
       },
     });
 
@@ -187,8 +128,6 @@ async function completeWorkoutAction() {
       habit: fitnessSessionTitle,
       date: today,
       pageId: existingPage.id,
-      foundHabitTrackerTitles: foundTitles,
-      habitLogProperties,
     };
   }
 
@@ -221,9 +160,6 @@ async function completeWorkoutAction() {
           start: today,
         },
       },
-      "Hide": {
-        checkbox: true,
-      },
     },
   });
 
@@ -233,8 +169,6 @@ async function completeWorkoutAction() {
     habit: fitnessSessionTitle,
     date: today,
     pageId: created.id,
-    foundHabitTrackerTitles: foundTitles,
-    habitLogProperties,
   };
 }
 
@@ -251,25 +185,24 @@ module.exports = async function handler(req, res) {
         ? await getDatabasePropertyTypes(process.env.HABIT_LOG_DATABASE_ID)
         : {};
 
-      let habitTrackerTitles = [];
+      let fitnessSessionTitle = "";
 
-      if (process.env.HABIT_TRACKERS_DATABASE_ID) {
-        const response = await notion.databases.query({
-          database_id: process.env.HABIT_TRACKERS_DATABASE_ID,
-          page_size: 100,
+      if (process.env.FITNESS_SESSION_TRACKER_PAGE_ID) {
+        const fitnessSessionPage = await notion.pages.retrieve({
+          page_id: process.env.FITNESS_SESSION_TRACKER_PAGE_ID,
         });
 
-        habitTrackerTitles = response.results.map(page => getTitleFromPage(page));
+        fitnessSessionTitle = getTitleFromPage(fitnessSessionPage);
       }
 
       return res.status(200).json({
         status: "complete-workout endpoint is live",
         hasNotionToken: Boolean(process.env.NOTION_TOKEN),
         hasHabitLogDatabaseId: Boolean(process.env.HABIT_LOG_DATABASE_ID),
-        hasHabitTrackersDatabaseId: Boolean(process.env.HABIT_TRACKERS_DATABASE_ID),
+        hasFitnessSessionTrackerPageId: Boolean(process.env.FITNESS_SESSION_TRACKER_PAGE_ID),
         today: getTodayInLondon(),
+        fitnessSessionTitle,
         habitLogProperties,
-        habitTrackerTitles,
       });
     } catch (error) {
       return res.status(500).json({
