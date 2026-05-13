@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --card: #fffdfb;
+      --border: #ece2d9;
+      --text: #5e5146;
+      --muted: #a59688;
+      --cream: #fffaf6;
+      --blush: #f6ebe6;
+      --sage: #aab39a;
+      --sage-dark: #8d977c;
+      --rose: #d9aaa1;
+      --rose-soft: #ead2cb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: "Inter", sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    body {
+      padding: 8px;
+    }
+
+    .dashboard-row {
+      width: 100%;
+      display: flex;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      position: relative;
+      overflow: hidden;
+      min-height: 225px;
+    }
+
+    .beauty-card {
+      flex: 0.85;
+      min-width: 250px;
+    }
+
+    .workout-card {
+      flex: 1.15;
+      min-width: 330px;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .workout-card .top {
+      align-items: center;
+      justify-content: flex-start;
+      gap: 9px;
+      margin-bottom: 18px;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sparkle {
+      width: 24px;
+      height: 24px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .workout-icon {
+      width: 20px;
+      height: 20px;
+      color: #b5a493;
+      flex-shrink: 0;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      white-space: nowrap;
+      line-height: 1;
+    }
+
+    .progress-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      border: 2px solid var(--sage-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f7f3ee;
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 4px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      line-height: 1.25;
+      color: var(--text);
+    }
+
+    .check {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1.6px solid #cdbfaf;
+      background: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
+    }
+
+    .check.checked {
+      background: var(--sage);
+      border-color: var(--sage);
+    }
+
+    .check.checked::after {
+      content: "✓";
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .label {
+      flex: 1;
+    }
+
+    .label.custom::after {
+      content: " custom";
+      margin-left: 6px;
+      font-size: 10px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .workout-main {
+      position: relative;
+      z-index: 3;
+      width: 52%;
+      min-height: 150px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .workout-name {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 24px;
+      line-height: 1.05;
+      font-weight: 500;
+      color: #4d4038;
+      margin-top: 4px;
+      margin-bottom: 18px;
+      letter-spacing: -0.02em;
+      max-width: 150px;
+    }
+
+    .duration {
+      font-size: 13px;
+      line-height: 1.2;
+      font-weight: 600;
+      color: #927f72;
+    }
+
+    .empty-title {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 24px;
+      line-height: 1.05;
+      font-weight: 500;
+      color: #4d4038;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      max-width: 160px;
+    }
+
+    .empty-sub {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+      max-width: 165px;
+    }
+
+    .picture-area {
+      position: absolute;
+      right: 2px;
+      bottom: 6px;
+      width: 165px;
+      height: 155px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .soft-arch {
+      position: absolute;
+      right: -26px;
+      bottom: -16px;
+      width: 165px;
+      height: 120px;
+      border-radius: 100px 100px 0 0;
+      background: rgba(244, 234, 229, 0.82);
+      z-index: 0;
+    }
+
+    .product-scene {
+      position: absolute;
+      right: 14px;
+      bottom: 10px;
+      width: 132px;
+      height: 125px;
+      z-index: 2;
+      filter: drop-shadow(0 10px 12px rgba(92, 73, 60, 0.10));
+    }
+
+    .edit-btn {
+      position: absolute;
+      right: 14px;
+      bottom: 12px;
+      border: 1px solid var(--border);
+      background: var(--cream);
+      color: #7b5d52;
+      border-radius: 999px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 11px;
+      cursor: pointer;
+      font-weight: 700;
+      z-index: 5;
+    }
+
+    .edit-btn:hover {
+      background: #f7efe9;
+    }
+
+    .note,
+    .loading,
+    .error {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+
+    .overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 253, 251, 0.97);
+      backdrop-filter: blur(3px);
+      border-radius: 18px;
+      padding: 18px;
+      z-index: 10;
+    }
+
+    .overlay.open {
+      display: block;
+    }
+
+    .overlay-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .input-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      background: white;
+      padding: 10px 11px;
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      min-width: 0;
+    }
+
+    input:focus {
+      border-color: #d7c7bb;
+    }
+
+    .small-btn {
+      border: 1px solid var(--border);
+      background: var(--blush);
+      color: #6e5348;
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .small-btn.secondary {
+      background: var(--cream);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .custom-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 92px;
+      overflow: auto;
+      padding-right: 3px;
+      margin-bottom: 12px;
+    }
+
+    .custom-edit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      border: 1px solid #eee4dd;
+      background: #fffaf6;
+      border-radius: 10px;
+      padding: 7px 9px;
+    }
+
+    .remove-btn {
+      border: none;
+      background: transparent;
+      color: #b48a84;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    @media (max-width: 720px) {
+      .dashboard-row {
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .beauty-card,
+      .workout-card {
+        min-width: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard-row">
+    <div class="card beauty-card">
+      <div class="top">
+        <div class="title-wrap">
+          <svg class="sparkle" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 2.5L14.1 8L20 10L14.1 12L12 17.5L9.9 12L4 10L9.9 8L12 2.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+          <div class="title">Beauty Today</div>
+        </div>
+
+        <div class="progress-circle" id="beautyProgressCircle">0/0</div>
+      </div>
+
+      <div id="beautyContent">
+        <div class="loading">Loading beauty routine…</div>
+      </div>
+
+      <button class="edit-btn" onclick="openBeautyEdit()">Edit</button>
+
+      <div id="beautyOverlay" class="overlay">
+        <div class="overlay-title">Add beauty to-dos</div>
+
+        <div class="input-row">
+          <input id="newBeautyTaskInput" placeholder="e.g. Lip mask, gua sha, perfume">
+          <button class="small-btn" onclick="addCustomBeautyTask()">Add</button>
+        </div>
+
+        <div id="customBeautyList" class="custom-list"></div>
+
+        <div class="actions">
+          <button class="small-btn secondary" onclick="closeBeautyEdit()">Done</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card workout-card">
+      <div class="top">
+        <svg class="workout-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M5 9V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M19 9V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M8 7V17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M16 7V17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M8 12H16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M3.5 10.5V13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M20.5 10.5V13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        </svg>
+        <div class="title">Workout</div>
+      </div>
+
+      <div id="workoutContent" class="workout-main">
+        <div class="loading">Loading workout…</div>
+      </div>
+
+      <div class="picture-area" aria-hidden="true">
+        <div class="soft-arch"></div>
+
+        <svg class="product-scene" viewBox="0 0 180 165" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <ellipse cx="91" cy="145" rx="62" ry="8" fill="#EADDD6" opacity="0.55"/>
+
+          <g transform="translate(18 84) rotate(-14)">
+            <rect x="0" y="22" width="92" height="42" rx="21" fill="#DDB8B0"/>
+            <rect x="2" y="24" width="38" height="38" rx="19" fill="#D2A49C"/>
+            <circle cx="21" cy="43" r="12" fill="#FFF7F3"/>
+            <circle cx="21" cy="43" r="5" fill="#C9978E"/>
+            <path d="M40 26C52 27 66 25 84 25" stroke="#E7CAC2" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+          </g>
+
+          <g transform="translate(106 18)">
+            <rect x="17" y="0" width="25" height="17" rx="6" fill="#8E7B70"/>
+            <rect x="9" y="13" width="42" height="98" rx="20" fill="#D8AFA6"/>
+            <rect x="16" y="29" width="28" height="57" rx="14" fill="#E6C7BF" opacity="0.72"/>
+            <path d="M30 16V107" stroke="#CFA199" stroke-width="2" opacity="0.25"/>
+            <ellipse cx="30" cy="13" rx="17" ry="4" fill="#E8CDC6" opacity="0.65"/>
+          </g>
+
+          <g transform="translate(98 120) rotate(-7)">
+            <circle cx="8" cy="18" r="11" fill="#E8D8D1"/>
+            <circle cx="39" cy="15" r="13" fill="#E8D8D1"/>
+            <rect x="15" y="14" width="24" height="7" rx="3.5" fill="#CDB3A9"/>
+          </g>
+
+          <circle cx="67" cy="135" r="10" fill="#E9D7D0"/>
+          <circle cx="86" cy="130" r="8" fill="#E9D7D0"/>
+          <circle cx="101" cy="139" r="7" fill="#E9D7D0"/>
+
+          <path d="M21 81C38 63 55 56 72 60" stroke="#F3E8E2" stroke-width="3" stroke-linecap="round" opacity="0.8"/>
+        </svg>
+      </div>
+
+      <button class="edit-btn" onclick="openWorkoutEdit()">Edit</button>
+
+      <div id="workoutOverlay" class="overlay">
+        <div class="overlay-title">Edit workout</div>
+
+        <div class="input-stack">
+          <input id="workoutInput" placeholder="e.g. Lower Body Workout">
+          <input id="durationInput" placeholder="e.g. 45 min">
+        </div>
+
+        <div class="actions">
+          <button class="small-btn secondary" onclick="clearWorkoutCustom()">Clear</button>
+          <button class="small-btn" onclick="saveWorkoutCustom()">Save</button>
+          <button class="small-btn secondary" onclick="closeWorkoutEdit()">Done</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
+
+    let notionBeautyTasks = [];
+    let customBeautyTasks = [];
+    let checkedBeauty = {};
+
+    let apiWorkout = "";
+    let customWorkout = "";
+    let customDuration = "";
+
+    function todayKey() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function storageKey(name) {
+      return `daily-cards-${todayKey()}-${name}`;
+    }
+
+    function normalise(text) {
+      return (text || "")
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^\w\s]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function tidyLabel(text) {
+      return (text || "")
+        .replace(/beauty today/gi, "")
+        .replace(/nothing right now/gi, "")
+        .replace(/[•✦✨]/g, "")
+        .trim();
+    }
+
+    function parseBeautyTasks(raw) {
+      const cleaned = tidyLabel(raw);
+      if (!cleaned) return [];
+
+      return cleaned
+        .split(/,|\n|•|·|\/|;/)
+        .map(task => tidyLabel(task))
+        .filter(Boolean);
+    }
+
+    function cleanWorkoutText(text) {
+      return (text || "")
+        .replace(/nothing planned for today/gi, "")
+        .replace(/^workout/gi, "")
+        .replace(/[•✨✦]/g, "")
+        .trim();
+    }
+
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function loadStorage() {
+      try {
+        customBeautyTasks = JSON.parse(localStorage.getItem(storageKey("beautyCustom")) || "[]");
+        checkedBeauty = JSON.parse(localStorage.getItem(storageKey("beautyChecked")) || "{}");
+      } catch {
+        customBeautyTasks = [];
+        checkedBeauty = {};
+      }
+
+      customWorkout = localStorage.getItem(storageKey("customWorkout")) || "";
+      customDuration = localStorage.getItem(storageKey("customDuration")) || "";
+    }
+
+    function saveBeautyStorage() {
+      localStorage.setItem(storageKey("beautyCustom"), JSON.stringify(customBeautyTasks));
+      localStorage.setItem(storageKey("beautyChecked"), JSON.stringify(checkedBeauty));
+    }
+
+    function saveWorkoutStorage() {
+      localStorage.setItem(storageKey("customWorkout"), customWorkout);
+      localStorage.setItem(storageKey("customDuration"), customDuration);
+    }
+
+    function beautyTaskId(label, source) {
+      return `${source}:${normalise(label)}`;
+    }
+
+    function allBeautyTasks() {
+      return [
+        ...notionBeautyTasks.map(label => ({ label, source: "notion" })),
+        ...customBeautyTasks.map(label => ({ label, source: "custom" }))
+      ];
+    }
+
+    function toggleBeautyTask(label, source) {
+      const id = beautyTaskId(label, source);
+      checkedBeauty[id] = !checkedBeauty[id];
+      saveBeautyStorage();
+      renderBeauty();
+    }
+
+    function renderBeauty() {
+      const tasks = allBeautyTasks();
+      const total = tasks.length;
+      const done = tasks.filter(task => checkedBeauty[beautyTaskId(task.label, task.source)]).length;
+
+      document.getElementById("beautyProgressCircle").textContent = `${done}/${total}`;
+
+      const content = document.getElementById("beautyContent");
+      content.innerHTML = "";
+
+      if (!tasks.length) {
+        content.innerHTML = `<div class="note">No beauty tasks found yet. Click edit to add your own.</div>`;
+        renderCustomBeautyList();
+        return;
+      }
+
+      const list = document.createElement("div");
+      list.className = "list";
+
+      tasks.forEach(task => {
+        const id = beautyTaskId(task.label, task.source);
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const button = document.createElement("button");
+        button.className = checkedBeauty[id] ? "check checked" : "check";
+        button.onclick = () => toggleBeautyTask(task.label, task.source);
+
+        const label = document.createElement("span");
+        label.className = task.source === "custom" ? "label custom" : "label";
+        label.textContent = task.label;
+
+        row.appendChild(button);
+        row.appendChild(label);
+        list.appendChild(row);
+      });
+
+      content.appendChild(list);
+      renderCustomBeautyList();
+    }
+
+    function renderCustomBeautyList() {
+      const customList = document.getElementById("customBeautyList");
+      customList.innerHTML = "";
+
+      if (!customBeautyTasks.length) {
+        customList.innerHTML = `<div class="note">Your custom tasks will appear here.</div>`;
+        return;
+      }
+
+      customBeautyTasks.forEach((task, index) => {
+        const row = document.createElement("div");
+        row.className = "custom-edit-item";
+
+        const label = document.createElement("span");
+        label.textContent = task;
+
+        const remove = document.createElement("button");
+        remove.className = "remove-btn";
+        remove.textContent = "×";
+        remove.onclick = () => removeCustomBeautyTask(index);
+
+        row.appendChild(label);
+        row.appendChild(remove);
+        customList.appendChild(row);
+      });
+    }
+
+    function addCustomBeautyTask() {
+      const input = document.getElementById("newBeautyTaskInput");
+      const value = input.value.trim();
+
+      if (!value) return;
+
+      customBeautyTasks.push(value);
+      input.value = "";
+      saveBeautyStorage();
+      renderBeauty();
+    }
+
+    function removeCustomBeautyTask(index) {
+      const removed = customBeautyTasks[index];
+      const id = beautyTaskId(removed, "custom");
+
+      customBeautyTasks.splice(index, 1);
+      delete checkedBeauty[id];
+
+      saveBeautyStorage();
+      renderBeauty();
+    }
+
+    function openBeautyEdit() {
+      document.getElementById("beautyOverlay").classList.add("open");
+      renderCustomBeautyList();
+    }
+
+    function closeBeautyEdit() {
+      document.getElementById("beautyOverlay").classList.remove("open");
+    }
+
+    function getDisplayWorkout() {
+      return customWorkout || cleanWorkoutText(apiWorkout);
+    }
+
+    function getDisplayDuration() {
+      return customDuration || "45 min";
+    }
+
+    function renderWorkout() {
+      const content = document.getElementById("workoutContent");
+      const workout = getDisplayWorkout();
+
+      if (!workout) {
+        content.innerHTML = `
+          <div class="empty-title">No workout planned</div>
+          <div class="empty-sub">Add one manually or link one in your Notion Daily Dashboard.</div>
+        `;
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="workout-name">${escapeHTML(workout)}</div>
+        <div class="duration">${escapeHTML(getDisplayDuration())}</div>
+      `;
+    }
+
+    function openWorkoutEdit() {
+      document.getElementById("workoutOverlay").classList.add("open");
+      document.getElementById("workoutInput").value = getDisplayWorkout();
+      document.getElementById("durationInput").value = customDuration || "45 min";
+    }
+
+    function closeWorkoutEdit() {
+      document.getElementById("workoutOverlay").classList.remove("open");
+    }
+
+    function saveWorkoutCustom() {
+      customWorkout = document.getElementById("workoutInput").value.trim();
+      customDuration = document.getElementById("durationInput").value.trim();
+      saveWorkoutStorage();
+      renderWorkout();
+    }
+
+    function clearWorkoutCustom() {
+      customWorkout = "";
+      customDuration = "";
+
+      localStorage.removeItem(storageKey("customWorkout"));
+      localStorage.removeItem(storageKey("customDuration"));
+
+      document.getElementById("workoutInput").value = "";
+      document.getElementById("durationInput").value = "";
+      renderWorkout();
+    }
+
+    async function loadDashboardCards() {
+      loadStorage();
+
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error("Could not load dashboard data.");
+
+        const data = await response.json();
+
+        notionBeautyTasks = parseBeautyTasks(data.beautyToday || "");
+
+        notionBeautyTasks.forEach(task => {
+          const id = beautyTaskId(task, "notion");
+          if (checkedBeauty[id] === undefined) checkedBeauty[id] = false;
+        });
+
+        apiWorkout = data.workout || "";
+
+        saveBeautyStorage();
+        renderBeauty();
+        renderWorkout();
+      } catch (error) {
+        document.getElementById("beautyContent").innerHTML = `<div class="error">Could not load Beauty Today.</div>`;
+        document.getElementById("workoutContent").innerHTML = `<div class="error">Could not load workout.</div>`;
+        console.error(error);
+      }
+    }
+
+    document.getElementById("newBeautyTaskInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") addCustomBeautyTask();
+    });
+
+    document.getElementById("workoutInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") saveWorkoutCustom();
+    });
+
+    document.getElementById("durationInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") saveWorkoutCustom();
+    });
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape") {
+        closeBeautyEdit();
+        closeWorkoutEdit();
+      }
+    });
+
+    loadDashboardCards();
+  </script>
+</body>
+</html>
