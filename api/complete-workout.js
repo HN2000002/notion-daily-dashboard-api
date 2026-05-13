@@ -6,7 +6,7 @@ const notion = new Client({
 
 function sendCors(res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 }
 
@@ -43,25 +43,32 @@ async function findFitnessSessionTrackerPage() {
   const habitTrackersDatabaseId = process.env.HABIT_TRACKERS_DATABASE_ID;
 
   if (!habitTrackersDatabaseId) {
-    throw new Error("Missing HABIT_TRACKERS_DATABASE_ID");
+    throw new Error("Missing HABIT_TRACKERS_DATABASE_ID in Vercel environment variables.");
   }
 
   const response = await notion.databases.query({
     database_id: habitTrackersDatabaseId,
-    filter: {
-      property: "Name",
-      title: {
-        equals: "Fitness Session",
-      },
-    },
-    page_size: 1,
+    page_size: 100,
   });
 
-  if (!response.results.length) {
-    throw new Error('Could not find "Fitness Session" in Habit Trackers database.');
+  const pages = response.results || [];
+
+  const titles = pages.map(page => ({
+    id: page.id,
+    title: getTitleFromPage(page),
+  }));
+
+  const fitnessPage =
+    pages.find(page => getTitleFromPage(page).trim().toLowerCase() === "fitness session") ||
+    pages.find(page => getTitleFromPage(page).trim().toLowerCase().includes("fitness"));
+
+  if (!fitnessPage) {
+    throw new Error(
+      `Could not find a Habit Tracker page called "Fitness Session". Found these titles instead: ${titles.map(t => t.title || "(blank)").join(", ")}`
+    );
   }
 
-  return response.results[0];
+  return fitnessPage;
 }
 
 module.exports = async function handler(req, res) {
@@ -69,6 +76,16 @@ module.exports = async function handler(req, res) {
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
+  }
+
+  if (req.method === "GET") {
+    return res.status(200).json({
+      status: "complete-workout endpoint is live",
+      hasNotionToken: Boolean(process.env.NOTION_TOKEN),
+      hasHabitLogDatabaseId: Boolean(process.env.HABIT_LOG_DATABASE_ID),
+      hasHabitTrackersDatabaseId: Boolean(process.env.HABIT_TRACKERS_DATABASE_ID),
+      today: getTodayInLondon(),
+    });
   }
 
   if (req.method !== "POST") {
@@ -80,15 +97,18 @@ module.exports = async function handler(req, res) {
   try {
     const habitLogDatabaseId = process.env.HABIT_LOG_DATABASE_ID;
 
-    if (!process.env.NOTION_TOKEN || !habitLogDatabaseId) {
-      return res.status(500).json({
-        error: "Missing NOTION_TOKEN or HABIT_LOG_DATABASE_ID",
-      });
+    if (!process.env.NOTION_TOKEN) {
+      throw new Error("Missing NOTION_TOKEN in Vercel environment variables.");
+    }
+
+    if (!habitLogDatabaseId) {
+      throw new Error("Missing HABIT_LOG_DATABASE_ID in Vercel environment variables.");
     }
 
     const today = getTodayInLondon();
     const fitnessSessionPage = await findFitnessSessionTrackerPage();
     const fitnessSessionPageId = fitnessSessionPage.id;
+    const fitnessSessionTitle = getTitleFromPage(fitnessSessionPage) || "Fitness Session";
 
     const existing = await notion.databases.query({
       database_id: habitLogDatabaseId,
@@ -129,7 +149,7 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({
         success: true,
         action: "updated_existing_log",
-        habit: getTitleFromPage(fitnessSessionPage),
+        habit: fitnessSessionTitle,
         date: today,
         pageId: existingPage.id,
       });
@@ -173,7 +193,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({
       success: true,
       action: "created_new_log",
-      habit: getTitleFromPage(fitnessSessionPage),
+      habit: fitnessSessionTitle,
       date: today,
       pageId: created.id,
     });
@@ -181,6 +201,7 @@ module.exports = async function handler(req, res) {
     console.error(error);
 
     return res.status(500).json({
+      success: false,
       error: "Failed to complete workout",
       message: error.message,
     });
