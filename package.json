@@ -1,0 +1,8 @@
+{
+  "name": "notion-daily-dashboard-api",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@notionhq/client": "^2.3.0"
+  }
+}
