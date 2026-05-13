@@ -68,27 +68,6 @@ function getPropertyText(property) {
   }
 }
 
-async function getDeepPropertyText(pageId, property) {
-  if (!property?.id) return getPropertyText(property);
-
-  try {
-    const response = await notion.pages.properties.retrieve({
-      page_id: pageId,
-      property_id: property.id,
-    });
-
-    // If Notion returns a paginated list of property items
-    if (response.object === "list" && Array.isArray(response.results)) {
-      return response.results.map(getPropertyText).filter(Boolean).join(", ");
-    }
-
-    // If Notion returns a single property item
-    return getPropertyText(response);
-  } catch (error) {
-    return getPropertyText(property);
-  }
-}
-
 function getTodayISO() {
   return new Date().toISOString().split("T")[0];
 }
@@ -111,95 +90,114 @@ function extractLine(text, label) {
   return match ? match[1].trim() : "";
 }
 
-async function buildDashboardData(page, today) {
+async function getTodayDashboard(today) {
+  const databaseId = process.env.DAILY_DASHBOARD_DATABASE_ID;
+
+  const response = await notion.databases.query({
+    database_id: databaseId,
+    filter: {
+      property: "Date",
+      date: {
+        equals: today,
+      },
+    },
+    page_size: 1,
+  });
+
+  if (!response.results.length) return null;
+
+  const page = response.results[0];
   const p = page.properties;
-  const pageId = page.id;
-
-  const dayTitle = getPropertyText(p["Day"]);
-  const greeting = getPropertyText(p["Greeting"]);
-
-  const mealPlanAssistant = getPropertyText(p["Meal Plan Assistant"]);
-  const beautyTodayFormula = getPropertyText(p["Beauty Today"]);
-  const workoutFormula = getPropertyText(p["Workout Formula"]);
-  const cycleFormula = getPropertyText(p["Cycle Phase Formula"]);
-
-  const todayBreakfastDeep = await getDeepPropertyText(pageId, p["Today Breakfast"]);
-  const todayLunchDeep = await getDeepPropertyText(pageId, p["Today Lunch"]);
-  const todayDinnerDeep = await getDeepPropertyText(pageId, p["Today Dinner"]);
-  const todayWorkoutDeep = await getDeepPropertyText(pageId, p["Today Workout"]);
-  const beautyNowDeep = await getDeepPropertyText(pageId, p["Beauty Now"]);
-  const currentPhaseDeep = await getDeepPropertyText(pageId, p["Current Phase"]);
-
-  const breakfast =
-    todayBreakfastDeep ||
-    extractLine(mealPlanAssistant, "Breakfast") ||
-    "";
-
-  const lunch =
-    todayLunchDeep ||
-    extractLine(mealPlanAssistant, "Lunch") ||
-    "";
-
-  const dinner =
-    todayDinnerDeep ||
-    extractLine(mealPlanAssistant, "Dinner") ||
-    "";
-
-  const beautyToday =
-    cleanText(beautyTodayFormula) ||
-    cleanText(beautyNowDeep) ||
-    "Nothing right now";
-
-  const workout =
-    cleanText(workoutFormula) ||
-    cleanText(todayWorkoutDeep) ||
-    "Nothing planned for today";
-
-  const currentPhase =
-    currentPhaseDeep ||
-    getPropertyText(p["Current Phase"]) ||
-    cleanText(cycleFormula) ||
-    "";
-
-  const stream =
-    getPropertyText(p["Stream Today"]) ||
-    getPropertyText(p["Stream Now"]) ||
-    "";
-
-  const score = [
-    breakfast,
-    lunch,
-    dinner,
-    beautyToday !== "Nothing right now" ? beautyToday : "",
-    workout !== "Nothing planned for today" ? workout : "",
-    currentPhase,
-    stream,
-  ].filter(Boolean).join(" ").length;
 
   return {
-    date: today,
-    pageId,
-    dayTitle,
-    greeting,
-    currentPhase,
-    beautyToday,
-    breakfast,
-    lunch,
-    dinner,
-    workout,
-    stream,
-    score,
+    pageId: page.id,
+    greeting: getPropertyText(p["Greeting"]),
+    beautyToday:
+      cleanText(getPropertyText(p["Beauty Today"])) ||
+      cleanText(getPropertyText(p["Beauty Now"])) ||
+      "Nothing right now",
+    workout:
+      cleanText(getPropertyText(p["Workout Formula"])) ||
+      cleanText(getPropertyText(p["Today Workout"])) ||
+      "Nothing planned for today",
+    currentPhase:
+      getPropertyText(p["Current Phase"]) ||
+      cleanText(getPropertyText(p["Cycle Phase Formula"])) ||
+      "",
+    stream:
+      getPropertyText(p["Stream Today"]) ||
+      getPropertyText(p["Stream Now"]) ||
+      "",
+  };
+}
+
+async function getTodayMeals(today) {
+  const databaseId = process.env.MEAL_PLAN_DATABASE_ID;
+
+  if (!databaseId) {
+    return {
+      breakfast: "",
+      lunch: "",
+      dinner: "",
+      snacks: "",
+      debug: "Missing MEAL_PLAN_DATABASE_ID",
+    };
+  }
+
+  const response = await notion.databases.query({
+    database_id: databaseId,
+    filter: {
+      property: "Date",
+      date: {
+        equals: today,
+      },
+    },
+    page_size: 1,
+  });
+
+  if (!response.results.length) {
+    return {
+      breakfast: "",
+      lunch: "",
+      dinner: "",
+      snacks: "",
+      debug: "No meal plan row found for today",
+    };
+  }
+
+  const page = response.results[0];
+  const p = page.properties;
+
+  const formula = getPropertyText(p["Formula"]);
+
+  return {
+    breakfast:
+      getPropertyText(p["Breakfast"]) ||
+      getPropertyText(p["Today Breakfast"]) ||
+      extractLine(formula, "Breakfast") ||
+      "",
+
+    lunch:
+      getPropertyText(p["Lunch"]) ||
+      getPropertyText(p["Today Lunch"]) ||
+      extractLine(formula, "Lunch") ||
+      "",
+
+    dinner:
+      getPropertyText(p["Dinner"]) ||
+      getPropertyText(p["Today Dinner"]) ||
+      extractLine(formula, "Dinner") ||
+      "",
+
+    snacks:
+      getPropertyText(p["Snacks"]) ||
+      extractLine(formula, "Snacks") ||
+      "",
+
     debug: {
-      mealPlanAssistant,
-      beautyTodayFormula,
-      workoutFormula,
-      cycleFormula,
-      todayBreakfastDeep,
-      todayLunchDeep,
-      todayDinnerDeep,
-      todayWorkoutDeep,
-      beautyNowDeep,
-      currentPhaseDeep,
+      mealPageId: page.id,
+      formula,
+      availableMealProperties: Object.keys(p),
     },
   };
 }
@@ -214,9 +212,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const databaseId = process.env.DAILY_DASHBOARD_DATABASE_ID;
-
-    if (!process.env.NOTION_TOKEN || !databaseId) {
+    if (!process.env.NOTION_TOKEN || !process.env.DAILY_DASHBOARD_DATABASE_ID) {
       return res.status(500).json({
         error: "Missing NOTION_TOKEN or DAILY_DASHBOARD_DATABASE_ID",
       });
@@ -224,63 +220,33 @@ module.exports = async function handler(req, res) {
 
     const today = getTodayISO();
 
-    const response = await notion.databases.query({
-      database_id: databaseId,
-      filter: {
-        property: "Date",
-        date: {
-          equals: today,
-        },
-      },
-      page_size: 10,
-    });
+    const dashboard = await getTodayDashboard(today);
 
-    if (!response.results.length) {
+    if (!dashboard) {
       return res.status(404).json({
         error: "No Daily Dashboard row found for today",
         today,
       });
     }
 
-    const candidates = await Promise.all(
-      response.results.map((page) => buildDashboardData(page, today))
-    );
+    const meals = await getTodayMeals(today);
 
-    candidates.sort((a, b) => b.score - a.score);
-
-    const best = candidates[0];
-
-    const data = {
-      date: best.date,
-      greeting: best.greeting,
-      currentPhase: best.currentPhase,
-      beautyToday: best.beautyToday,
-      breakfast: best.breakfast,
-      lunch: best.lunch,
-      dinner: best.dinner,
-      workout: best.workout,
-      stream: best.stream,
-
+    return res.status(200).json({
+      date: today,
+      greeting: dashboard.greeting,
+      currentPhase: dashboard.currentPhase,
+      beautyToday: dashboard.beautyToday,
+      breakfast: meals.breakfast,
+      lunch: meals.lunch,
+      dinner: meals.dinner,
+      snacks: meals.snacks,
+      workout: dashboard.workout,
+      stream: dashboard.stream,
       debug: {
-        chosenPageId: best.pageId,
-        chosenDayTitle: best.dayTitle,
-        chosenScore: best.score,
-        allTodayRows: candidates.map((item) => ({
-          pageId: item.pageId,
-          dayTitle: item.dayTitle,
-          score: item.score,
-          breakfast: item.breakfast,
-          lunch: item.lunch,
-          dinner: item.dinner,
-          beautyToday: item.beautyToday,
-          workout: item.workout,
-          currentPhase: item.currentPhase,
-        })),
-        chosenRaw: best.debug,
+        dashboardPageId: dashboard.pageId,
+        mealsDebug: meals.debug,
       },
-    };
-
-    return res.status(200).json(data);
+    });
   } catch (error) {
     console.error(error);
 
