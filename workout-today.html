@@ -9,22 +9,20 @@
   <style>
     :root {
       --card: #fffdfb;
-      --border: #e9e1d8;
-      --text: #5f5449;
-      --muted: #a79a8a;
-      --sage: #aab39a;
-      --sage-dark: #8d977c;
-      --blush: #f3e6df;
+      --border: #ece2d9;
+      --text: #5e5146;
+      --muted: #a59688;
+      --soft-brown: #8f7c6f;
       --cream: #fffaf6;
-      --soft-pink: #ead7d1;
+      --blush: #f6ebe6;
+      --shadow: rgba(99, 82, 70, 0.08);
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html,
-    body {
+    html, body {
       margin: 0;
       padding: 0;
       background: transparent;
@@ -53,16 +51,16 @@
     .top {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-bottom: 22px;
+      gap: 9px;
+      margin-bottom: 18px;
       position: relative;
-      z-index: 2;
+      z-index: 3;
     }
 
     .icon {
       width: 20px;
       height: 20px;
-      color: #b4a594;
+      color: #b5a493;
       flex-shrink: 0;
     }
 
@@ -72,14 +70,14 @@
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--text);
-      white-space: nowrap;
+      line-height: 1;
     }
 
-    .content {
+    .main {
       position: relative;
-      z-index: 2;
+      z-index: 3;
       width: 52%;
-      min-height: 138px;
+      min-height: 150px;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
@@ -87,46 +85,47 @@
 
     .workout-name {
       font-family: "Playfair Display", Georgia, serif;
-      font-size: 25px;
-      line-height: 1.02;
+      font-size: 24px;
+      line-height: 1.05;
       font-weight: 500;
       color: #4d4038;
-      margin-bottom: 16px;
+      margin-top: 4px;
+      margin-bottom: 18px;
       letter-spacing: -0.02em;
+      max-width: 150px;
     }
 
     .duration {
       font-size: 13px;
+      line-height: 1.2;
       font-weight: 600;
-      color: #8d7d70;
-      margin-top: 2px;
+      color: #927f72;
     }
 
-    .status {
+    .empty-title {
       font-family: "Playfair Display", Georgia, serif;
       font-size: 24px;
-      line-height: 1.04;
+      line-height: 1.05;
+      font-weight: 500;
       color: #4d4038;
-      margin-top: 4px;
-      max-width: 150px;
-    }
-
-    .status-note {
-      font-size: 13px;
-      line-height: 1.5;
-      color: #a89688;
-      margin-top: 12px;
+      margin-top: 6px;
+      margin-bottom: 12px;
       max-width: 160px;
     }
 
-    .photo-wrap {
+    .empty-sub {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+      max-width: 165px;
+    }
+
+    .photo-area {
       position: absolute;
-      right: 10px;
-      bottom: 14px;
-      width: 138px;
-      height: 138px;
-      border-radius: 18px;
-      overflow: hidden;
+      right: 8px;
+      bottom: 10px;
+      width: 142px;
+      height: 155px;
       display: flex;
       align-items: flex-end;
       justify-content: center;
@@ -134,14 +133,14 @@
       pointer-events: none;
     }
 
-    .photo-bg {
+    .photo-glow {
       position: absolute;
       right: -18px;
-      bottom: -24px;
-      width: 170px;
-      height: 120px;
-      border-radius: 999px 999px 0 0;
-      background: rgba(238, 228, 223, 0.72);
+      bottom: -12px;
+      width: 148px;
+      height: 105px;
+      background: rgba(244, 233, 227, 0.78);
+      border-radius: 100px 100px 0 0;
       z-index: 0;
     }
 
@@ -149,30 +148,31 @@
       position: relative;
       z-index: 2;
       width: 126px;
-      height: auto;
+      max-height: 138px;
       object-fit: contain;
-      filter: drop-shadow(0 8px 10px rgba(95, 84, 73, 0.08));
+      filter: drop-shadow(0 8px 12px rgba(92, 73, 60, 0.10));
+      border-radius: 10px;
     }
 
     .edit-btn {
       position: absolute;
       right: 14px;
-      bottom: 13px;
+      bottom: 12px;
       border: 1px solid var(--border);
       background: var(--cream);
-      color: #7a5c51;
+      color: #7b5d52;
       border-radius: 999px;
       font-size: 9px;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      padding: 5px 10px;
+      padding: 5px 11px;
       cursor: pointer;
-      font-weight: 600;
-      z-index: 4;
+      font-weight: 700;
+      z-index: 5;
     }
 
     .edit-btn:hover {
-      background: #f5eee8;
+      background: #f7efe9;
     }
 
     .overlay {
@@ -202,16 +202,16 @@
     .input-stack {
       display: flex;
       flex-direction: column;
-      gap: 9px;
+      gap: 10px;
       margin-bottom: 14px;
     }
 
     input {
       width: 100%;
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 11px;
       background: white;
-      padding: 9px 10px;
+      padding: 10px 11px;
       font-family: "Inter", sans-serif;
       font-size: 13px;
       color: var(--text);
@@ -219,7 +219,7 @@
     }
 
     input:focus {
-      border-color: #d2c3b7;
+      border-color: #d7c7bb;
     }
 
     .actions {
@@ -232,7 +232,7 @@
     .small-btn {
       border: 1px solid var(--border);
       background: var(--blush);
-      color: #6c5148;
+      color: #6e5348;
       border-radius: 999px;
       padding: 8px 11px;
       font-size: 10px;
@@ -242,7 +242,7 @@
       cursor: pointer;
     }
 
-    .secondary {
+    .small-btn.secondary {
       background: var(--cream);
     }
 
@@ -254,7 +254,6 @@
     }
   </style>
 </head>
-
 <body>
   <div class="card">
     <div class="top">
@@ -267,19 +266,19 @@
         <path d="M3.5 10.5V13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
         <path d="M20.5 10.5V13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
       </svg>
-
       <div class="title">Workout</div>
     </div>
 
-    <div id="content" class="content">
+    <div id="content" class="main">
       <div class="loading">Loading workout…</div>
     </div>
 
-    <div class="photo-wrap" aria-hidden="true">
-      <div class="photo-bg"></div>
+    <div class="photo-area" aria-hidden="true">
+      <div class="photo-glow"></div>
       <img
+        id="workoutPhoto"
         class="photo"
-        src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=600&q=80"
+        src="https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=700&q=80"
         alt=""
       />
     </div>
@@ -305,6 +304,7 @@
 
   <script>
     const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
+    const DEFAULT_IMAGE = "https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=700&q=80";
 
     let apiWorkout = "";
     let customWorkout = "";
@@ -319,18 +319,6 @@
       return `workout-widget-${todayKey()}-${name}`;
     }
 
-    function tidyWorkout(text) {
-      return (text || "")
-        .replace(/workout/gi, "")
-        .replace(/nothing planned for today/gi, "")
-        .replace(/[•✦✨]/g, "")
-        .trim();
-    }
-
-    function titleCaseFallback(text) {
-      return tidyWorkout(text) || "";
-    }
-
     function loadStorage() {
       customWorkout = localStorage.getItem(storageKey("customWorkout")) || "";
       customDuration = localStorage.getItem(storageKey("customDuration")) || "";
@@ -343,8 +331,16 @@
       localStorage.setItem(storageKey("customPhoto"), customPhoto);
     }
 
+    function cleanWorkoutText(text) {
+      return (text || "")
+        .replace(/nothing planned for today/gi, "")
+        .replace(/workout/gi, "")
+        .replace(/[•✨✦]/g, "")
+        .trim();
+    }
+
     function getDisplayWorkout() {
-      return customWorkout || titleCaseFallback(apiWorkout);
+      return customWorkout || cleanWorkoutText(apiWorkout);
     }
 
     function getDisplayDuration() {
@@ -352,20 +348,27 @@
     }
 
     function getDisplayPhoto() {
-      return customPhoto || "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?auto=format&fit=crop&w=600&q=80";
+      return customPhoto || DEFAULT_IMAGE;
+    }
+
+    function escapeHTML(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
     function render() {
       const content = document.getElementById("content");
       const workout = getDisplayWorkout();
-      const photo = document.querySelector(".photo");
-
-      photo.src = getDisplayPhoto();
+      document.getElementById("workoutPhoto").src = getDisplayPhoto();
 
       if (!workout) {
         content.innerHTML = `
-          <div class="status">No workout planned</div>
-          <div class="status-note">Add one manually or link one in your Notion Daily Dashboard.</div>
+          <div class="empty-title">No workout planned</div>
+          <div class="empty-sub">Add one manually or link one in your Notion Daily Dashboard.</div>
         `;
         return;
       }
@@ -374,15 +377,6 @@
         <div class="workout-name">${escapeHTML(workout)}</div>
         <div class="duration">${escapeHTML(getDisplayDuration())}</div>
       `;
-    }
-
-    function escapeHTML(value) {
-      return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
     }
 
     function openEdit() {
@@ -400,7 +394,6 @@
       customWorkout = document.getElementById("workoutInput").value.trim();
       customDuration = document.getElementById("durationInput").value.trim();
       customPhoto = document.getElementById("photoInput").value.trim();
-
       saveStorage();
       render();
     }
@@ -414,10 +407,9 @@
       localStorage.removeItem(storageKey("customDuration"));
       localStorage.removeItem(storageKey("customPhoto"));
 
-      document.getElementById("workoutInput").value = titleCaseFallback(apiWorkout);
-      document.getElementById("durationInput").value = "45 min";
+      document.getElementById("workoutInput").value = "";
+      document.getElementById("durationInput").value = "";
       document.getElementById("photoInput").value = "";
-
       render();
     }
 
@@ -426,20 +418,22 @@
 
       try {
         const response = await fetch(API_URL);
-
-        if (!response.ok) {
-          throw new Error("Could not load dashboard data.");
-        }
+        if (!response.ok) throw new Error("Could not load dashboard data.");
 
         const data = await response.json();
         apiWorkout = data.workout || "";
-
         render();
       } catch (error) {
         document.getElementById("content").innerHTML = `<div class="error">Could not load workout.</div>`;
         console.error(error);
       }
     }
+
+    document.addEventListener("keydown", function(event) {
+      const overlayOpen = document.getElementById("overlay").classList.contains("open");
+      if (!overlayOpen) return;
+      if (event.key === "Escape") closeEdit();
+    });
 
     document.getElementById("workoutInput").addEventListener("keydown", function(event) {
       if (event.key === "Enter") saveCustom();
