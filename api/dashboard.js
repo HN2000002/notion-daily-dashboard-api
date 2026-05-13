@@ -8,6 +8,19 @@ function getPlainText(richText = []) {
   return richText.map((t) => t.plain_text).join("");
 }
 
+function getFormulaValue(property) {
+  if (!property || property.type !== "formula") return "";
+
+  const formula = property.formula;
+
+  if (formula.type === "string") return formula.string || "";
+  if (formula.type === "number") return String(formula.number ?? "");
+  if (formula.type === "boolean") return formula.boolean ? "Yes" : "No";
+  if (formula.type === "date") return formula.date?.start || "";
+
+  return "";
+}
+
 function getPropertyText(property) {
   if (!property) return "";
 
@@ -28,11 +41,7 @@ function getPropertyText(property) {
       return property.date?.start || "";
 
     case "formula":
-      if (property.formula.type === "string") return property.formula.string || "";
-      if (property.formula.type === "number") return String(property.formula.number ?? "");
-      if (property.formula.type === "boolean") return property.formula.boolean ? "Yes" : "No";
-      if (property.formula.type === "date") return property.formula.date?.start || "";
-      return "";
+      return getFormulaValue(property);
 
     case "rollup":
       if (property.rollup.type === "array") {
@@ -63,13 +72,10 @@ function getTodayISO() {
   return new Date().toISOString().split("T")[0];
 }
 
-function cleanFormulaText(text = "") {
+function cleanText(text = "") {
   return text
     .replace(/\n+/g, "\n")
     .replace(/[•✦✨]/g, "")
-    .replace(/Beauty Today/g, "")
-    .replace(/Workout/g, "")
-    .replace(/Meals Today/g, "")
     .trim();
 }
 
@@ -120,45 +126,60 @@ module.exports = async function handler(req, res) {
     const page = response.results[0];
     const p = page.properties;
 
-    const mealText = getPropertyText(p["Meal Plan Assistant"]);
-    const beautyText = cleanFormulaText(getPropertyText(p["Beauty Today"]));
-    const workoutText = cleanFormulaText(getPropertyText(p["Workout Formula"]));
-    const cycleText =
-      getPropertyText(p["Current Phase"]) ||
-      getPropertyText(p["Cycle Phase Formula"]) ||
-      getPropertyText(p["Cycle Phase"]) ||
-      "";
+    const mealPlanAssistant = getPropertyText(p["Meal Plan Assistant"]);
+    const beautyTodayFormula = getPropertyText(p["Beauty Today"]);
+    const workoutFormula = getPropertyText(p["Workout Formula"]);
+    const cycleFormula = getPropertyText(p["Cycle Phase Formula"]);
 
     const data = {
       date: today,
 
       greeting: getPropertyText(p["Greeting"]),
 
-      currentPhase: cleanFormulaText(cycleText),
+      currentPhase:
+        getPropertyText(p["Current Phase"]) ||
+        cleanText(cycleFormula) ||
+        "",
 
-      beautyToday: beautyText || "Nothing right now",
+      beautyToday:
+        cleanText(beautyTodayFormula)
+          .replace("Beauty Today", "")
+          .trim() || "Nothing right now",
 
       breakfast:
+        extractLine(mealPlanAssistant, "Breakfast") ||
         getPropertyText(p["Today Breakfast"]) ||
-        extractLine(mealText, "Breakfast") ||
         "",
 
       lunch:
+        extractLine(mealPlanAssistant, "Lunch") ||
         getPropertyText(p["Today Lunch"]) ||
-        extractLine(mealText, "Lunch") ||
         "",
 
       dinner:
+        extractLine(mealPlanAssistant, "Dinner") ||
         getPropertyText(p["Today Dinner"]) ||
-        extractLine(mealText, "Dinner") ||
         "",
 
-      workout: workoutText || "Nothing planned for today",
+      workout:
+        cleanText(workoutFormula)
+          .replace("Workout", "")
+          .trim() || "Nothing planned for today",
 
       stream:
         getPropertyText(p["Stream Today"]) ||
         getPropertyText(p["Stream Now"]) ||
         "",
+
+      debug: {
+        mealPlanAssistant,
+        beautyTodayFormula,
+        workoutFormula,
+        cycleFormula,
+        todayBreakfastRaw: getPropertyText(p["Today Breakfast"]),
+        todayLunchRaw: getPropertyText(p["Today Lunch"]),
+        todayDinnerRaw: getPropertyText(p["Today Dinner"]),
+      },
 
       raw: {
         pageId: page.id,
