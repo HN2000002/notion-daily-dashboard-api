@@ -199,7 +199,7 @@
       font-weight: 500;
       color: #4d4038;
       margin-top: 4px;
-      margin-bottom: 18px;
+      margin-bottom: 12px;
       letter-spacing: -0.02em;
       max-width: 150px;
     }
@@ -209,6 +209,45 @@
       line-height: 1.2;
       font-weight: 600;
       color: #927f72;
+      margin-bottom: 12px;
+    }
+
+    .complete-btn {
+      border: 1px solid #d7c8be;
+      background: #fffaf6;
+      color: #6f5b52;
+      border-radius: 999px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 7px 12px;
+      cursor: pointer;
+      font-weight: 700;
+      width: fit-content;
+      max-width: 150px;
+    }
+
+    .complete-btn:hover {
+      background: #f7efe9;
+    }
+
+    .complete-btn.completed {
+      background: var(--sage);
+      border-color: var(--sage);
+      color: white;
+    }
+
+    .complete-btn.loading-state {
+      opacity: 0.65;
+      cursor: wait;
+    }
+
+    .complete-message {
+      margin-top: 7px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.3;
+      max-width: 155px;
     }
 
     .empty-title {
@@ -526,6 +565,7 @@
 
   <script>
     const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
+    const COMPLETE_WORKOUT_URL = "https://notion-daily-dashboard-api.vercel.app/api/complete-workout";
 
     let notionBeautyTasks = [];
     let customBeautyTasks = [];
@@ -534,6 +574,8 @@
     let apiWorkout = "";
     let customWorkout = "";
     let customDuration = "";
+    let workoutCompleted = false;
+    let workoutCompleteMessage = "";
 
     function todayKey() {
       return new Date().toISOString().split("T")[0];
@@ -598,6 +640,8 @@
 
       customWorkout = localStorage.getItem(storageKey("customWorkout")) || "";
       customDuration = localStorage.getItem(storageKey("customDuration")) || "";
+      workoutCompleted = localStorage.getItem(storageKey("workoutCompleted")) === "true";
+      workoutCompleteMessage = localStorage.getItem(storageKey("workoutCompleteMessage")) || "";
     }
 
     function saveBeautyStorage() {
@@ -608,6 +652,8 @@
     function saveWorkoutStorage() {
       localStorage.setItem(storageKey("customWorkout"), customWorkout);
       localStorage.setItem(storageKey("customDuration"), customDuration);
+      localStorage.setItem(storageKey("workoutCompleted"), String(workoutCompleted));
+      localStorage.setItem(storageKey("workoutCompleteMessage"), workoutCompleteMessage);
     }
 
     function beautyTaskId(label, source) {
@@ -748,10 +794,56 @@
         return;
       }
 
+      const buttonText = workoutCompleted ? "✓ Completed" : "Mark Complete";
+      const buttonClass = workoutCompleted ? "complete-btn completed" : "complete-btn";
+
       content.innerHTML = `
         <div class="workout-name">${escapeHTML(workout)}</div>
         <div class="duration">${escapeHTML(getDisplayDuration())}</div>
+        <button id="completeWorkoutBtn" class="${buttonClass}" onclick="completeWorkout()" ${workoutCompleted ? "disabled" : ""}>
+          ${buttonText}
+        </button>
+        <div class="complete-message">${escapeHTML(workoutCompleteMessage)}</div>
       `;
+    }
+
+    async function completeWorkout() {
+      const button = document.getElementById("completeWorkoutBtn");
+
+      if (!button || workoutCompleted) return;
+
+      button.textContent = "Saving...";
+      button.classList.add("loading-state");
+      button.disabled = true;
+
+      try {
+        const response = await fetch(COMPLETE_WORKOUT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            source: "daily-cards-widget"
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.message || result.error || "Failed to complete workout");
+        }
+
+        workoutCompleted = true;
+        workoutCompleteMessage = "Logged in Notion.";
+        saveWorkoutStorage();
+        renderWorkout();
+      } catch (error) {
+        workoutCompleted = false;
+        workoutCompleteMessage = "Couldn’t log it. Check API setup.";
+        saveWorkoutStorage();
+        renderWorkout();
+        console.error(error);
+      }
     }
 
     function openWorkoutEdit() {
@@ -774,9 +866,13 @@
     function clearWorkoutCustom() {
       customWorkout = "";
       customDuration = "";
+      workoutCompleted = false;
+      workoutCompleteMessage = "";
 
       localStorage.removeItem(storageKey("customWorkout"));
       localStorage.removeItem(storageKey("customDuration"));
+      localStorage.removeItem(storageKey("workoutCompleted"));
+      localStorage.removeItem(storageKey("workoutCompleteMessage"));
 
       document.getElementById("workoutInput").value = "";
       document.getElementById("durationInput").value = "";
