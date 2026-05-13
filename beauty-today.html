@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Beauty Today</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #fcfaf7;
+      --card: #fffdfb;
+      --border: #e9e1d8;
+      --text: #5f5449;
+      --heading: #5f5449;
+      --muted: #a79a8a;
+      --green: #aab39a;
+      --green-dark: #8d977c;
+      --circle-bg: #f7f3ee;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: "Inter", sans-serif;
+      color: var(--text);
+    }
+
+    body {
+      padding: 8px;
+    }
+
+    .widget {
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      box-shadow: 0 0 0 rgba(0,0,0,0);
+      position: relative;
+      min-height: 235px;
+    }
+
+    .top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .sparkle {
+      width: 14px;
+      height: 14px;
+      flex: 0 0 auto;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--heading);
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .progress-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      border: 2px solid var(--green-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--circle-bg);
+      color: var(--heading);
+      font-size: 14px;
+      font-weight: 600;
+      flex: 0 0 auto;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+      margin-top: 4px;
+    }
+
+    .item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      line-height: 1.2;
+      color: var(--text);
+    }
+
+    .dot {
+      width: 16px;
+      height: 16px;
+      border-radius: 999px;
+      border: 1.6px solid #cdbfaf;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+      background: #fff;
+    }
+
+    .dot.checked {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .dot.checked::after {
+      content: "✓";
+      font-size: 11px;
+      color: #fff;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .label {
+      flex: 1;
+    }
+
+    .loading,
+    .error,
+    .empty-note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .empty-note {
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="widget">
+    <div class="card">
+      <div class="top">
+        <div class="title-wrap">
+          <svg class="sparkle" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3L13.8 8.2L19 10L13.8 11.8L12 17L10.2 11.8L5 10L10.2 8.2L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+          <div class="title">Beauty Today</div>
+        </div>
+
+        <div class="progress-circle" id="progressCircle">0/5</div>
+      </div>
+
+      <div id="content">
+        <div class="loading">Loading beauty routine…</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
+
+    const beautyItems = [
+      "Haircare routine",
+      "Skincare",
+      "Body lotion",
+      "Perfume",
+      "Nails"
+    ];
+
+    function normalise(text) {
+      return (text || "")
+        .toLowerCase()
+        .replace(/&/g, "and")
+        .replace(/[^\w\s]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function parseBeautyText(raw) {
+      if (!raw) return [];
+
+      return raw
+        .split(/,|\n|•|·|\/|;/)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(normalise);
+    }
+
+    function getCheckedItems(apiBeautyText) {
+      const values = parseBeautyText(apiBeautyText);
+
+      return beautyItems.map(item => {
+        const n = normalise(item);
+
+        const checked =
+          values.includes(n) ||
+          (n === "haircare routine" && values.some(v => v.includes("haircare"))) ||
+          (n === "skincare" && values.some(v => v.includes("skincare"))) ||
+          (n === "body lotion" && values.some(v => v.includes("body lotion") || v.includes("lotion"))) ||
+          (n === "perfume" && values.some(v => v.includes("perfume") || v.includes("fragrance"))) ||
+          (n === "nails" && values.some(v => v.includes("nails") || v.includes("nail")));
+
+        return {
+          label: item,
+          checked
+        };
+      });
+    }
+
+    function renderList(items, rawBeautyText = "") {
+      const checkedCount = items.filter(item => item.checked).length;
+      document.getElementById("progressCircle").textContent = `${checkedCount}/${items.length}`;
+
+      const content = document.getElementById("content");
+      content.innerHTML = "";
+
+      const list = document.createElement("div");
+      list.className = "list";
+
+      items.forEach(item => {
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const dot = document.createElement("span");
+        dot.className = item.checked ? "dot checked" : "dot";
+
+        const label = document.createElement("span");
+        label.className = "label";
+        label.textContent = item.label;
+
+        row.appendChild(dot);
+        row.appendChild(label);
+        list.appendChild(row);
+      });
+
+      content.appendChild(list);
+
+      if (!rawBeautyText || !rawBeautyText.trim()) {
+        const note = document.createElement("div");
+        note.className = "empty-note";
+        note.textContent = "No beauty routine detected yet.";
+        content.appendChild(note);
+      }
+    }
+
+    function renderError(message) {
+      document.getElementById("progressCircle").textContent = "0/5";
+      document.getElementById("content").innerHTML = `<div class="error">${message}</div>`;
+    }
+
+    async function loadBeautyWidget() {
+      try {
+        const response = await fetch(API_URL);
+        if (!response.ok) throw new Error("Could not load dashboard data.");
+
+        const data = await response.json();
+        const rawBeautyText = data.beautyToday || "";
+
+        const checkedItems = getCheckedItems(rawBeautyText);
+        renderList(checkedItems, rawBeautyText);
+      } catch (error) {
+        renderError("Could not load beauty routine.");
+        console.error(error);
+      }
+    }
+
+    loadBeautyWidget();
+  </script>
+</body>
+</html>
