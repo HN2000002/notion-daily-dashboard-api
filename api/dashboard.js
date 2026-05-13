@@ -68,6 +68,27 @@ function getPropertyText(property) {
   }
 }
 
+async function getDeepPropertyText(pageId, property) {
+  if (!property?.id) return getPropertyText(property);
+
+  try {
+    const response = await notion.pages.properties.retrieve({
+      page_id: pageId,
+      property_id: property.id,
+    });
+
+    // If Notion returns a paginated list of property items
+    if (response.object === "list" && Array.isArray(response.results)) {
+      return response.results.map(getPropertyText).filter(Boolean).join(", ");
+    }
+
+    // If Notion returns a single property item
+    return getPropertyText(response);
+  } catch (error) {
+    return getPropertyText(property);
+  }
+}
+
 function getTodayISO() {
   return new Date().toISOString().split("T")[0];
 }
@@ -90,8 +111,9 @@ function extractLine(text, label) {
   return match ? match[1].trim() : "";
 }
 
-function buildDashboardData(page, today) {
+async function buildDashboardData(page, today) {
   const p = page.properties;
+  const pageId = page.id;
 
   const dayTitle = getPropertyText(p["Day"]);
   const greeting = getPropertyText(p["Greeting"]);
@@ -101,32 +123,40 @@ function buildDashboardData(page, today) {
   const workoutFormula = getPropertyText(p["Workout Formula"]);
   const cycleFormula = getPropertyText(p["Cycle Phase Formula"]);
 
+  const todayBreakfastDeep = await getDeepPropertyText(pageId, p["Today Breakfast"]);
+  const todayLunchDeep = await getDeepPropertyText(pageId, p["Today Lunch"]);
+  const todayDinnerDeep = await getDeepPropertyText(pageId, p["Today Dinner"]);
+  const todayWorkoutDeep = await getDeepPropertyText(pageId, p["Today Workout"]);
+  const beautyNowDeep = await getDeepPropertyText(pageId, p["Beauty Now"]);
+  const currentPhaseDeep = await getDeepPropertyText(pageId, p["Current Phase"]);
+
   const breakfast =
+    todayBreakfastDeep ||
     extractLine(mealPlanAssistant, "Breakfast") ||
-    getPropertyText(p["Today Breakfast"]) ||
     "";
 
   const lunch =
+    todayLunchDeep ||
     extractLine(mealPlanAssistant, "Lunch") ||
-    getPropertyText(p["Today Lunch"]) ||
     "";
 
   const dinner =
+    todayDinnerDeep ||
     extractLine(mealPlanAssistant, "Dinner") ||
-    getPropertyText(p["Today Dinner"]) ||
     "";
 
   const beautyToday =
     cleanText(beautyTodayFormula) ||
-    cleanText(getPropertyText(p["Beauty Now"])) ||
+    cleanText(beautyNowDeep) ||
     "Nothing right now";
 
   const workout =
     cleanText(workoutFormula) ||
-    cleanText(getPropertyText(p["Today Workout"])) ||
+    cleanText(todayWorkoutDeep) ||
     "Nothing planned for today";
 
   const currentPhase =
+    currentPhaseDeep ||
     getPropertyText(p["Current Phase"]) ||
     cleanText(cycleFormula) ||
     "";
@@ -148,7 +178,7 @@ function buildDashboardData(page, today) {
 
   return {
     date: today,
-    pageId: page.id,
+    pageId,
     dayTitle,
     greeting,
     currentPhase,
@@ -164,9 +194,12 @@ function buildDashboardData(page, today) {
       beautyTodayFormula,
       workoutFormula,
       cycleFormula,
-      todayBreakfastRaw: getPropertyText(p["Today Breakfast"]),
-      todayLunchRaw: getPropertyText(p["Today Lunch"]),
-      todayDinnerRaw: getPropertyText(p["Today Dinner"]),
+      todayBreakfastDeep,
+      todayLunchDeep,
+      todayDinnerDeep,
+      todayWorkoutDeep,
+      beautyNowDeep,
+      currentPhaseDeep,
     },
   };
 }
@@ -209,7 +242,9 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const candidates = response.results.map((page) => buildDashboardData(page, today));
+    const candidates = await Promise.all(
+      response.results.map((page) => buildDashboardData(page, today))
+    );
 
     candidates.sort((a, b) => b.score - a.score);
 
@@ -239,6 +274,7 @@ module.exports = async function handler(req, res) {
           dinner: item.dinner,
           beautyToday: item.beautyToday,
           workout: item.workout,
+          currentPhase: item.currentPhase,
         })),
         chosenRaw: best.debug,
       },
