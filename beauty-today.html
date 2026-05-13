@@ -3,55 +3,49 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Beauty Today</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
 
   <style>
     :root {
-      --bg: #fcfaf7;
       --card: #fffdfb;
       --border: #e9e1d8;
       --text: #5f5449;
-      --heading: #5f5449;
       --muted: #a79a8a;
-      --green: #aab39a;
-      --green-dark: #8d977c;
-      --circle-bg: #f7f3ee;
+      --sage: #aab39a;
+      --sage-dark: #8d977c;
+      --blush: #f3e6df;
+      --cream: #fffaf6;
     }
 
     * {
       box-sizing: border-box;
     }
 
-    html, body {
+    html,
+    body {
       margin: 0;
       padding: 0;
       background: transparent;
       font-family: "Inter", sans-serif;
       color: var(--text);
+      overflow: hidden;
     }
 
     body {
       padding: 8px;
     }
 
-    .widget {
+    .card {
       width: 100%;
       max-width: 320px;
+      min-height: 225px;
       margin: 0 auto;
-    }
-
-    .card {
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 18px;
       padding: 18px 18px 16px;
-      box-shadow: 0 0 0 rgba(0,0,0,0);
       position: relative;
-      min-height: 235px;
     }
 
     .top {
@@ -66,15 +60,12 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      min-width: 0;
     }
 
     .sparkle {
       width: 14px;
       height: 14px;
-      flex: 0 0 auto;
       color: var(--muted);
-      margin-top: 1px;
     }
 
     .title {
@@ -82,8 +73,7 @@
       font-weight: 700;
       letter-spacing: 0.12em;
       text-transform: uppercase;
-      color: var(--heading);
-      line-height: 1;
+      color: var(--text);
       white-space: nowrap;
     }
 
@@ -91,21 +81,21 @@
       width: 48px;
       height: 48px;
       border-radius: 999px;
-      border: 2px solid var(--green-dark);
+      border: 2px solid var(--sage-dark);
       display: flex;
       align-items: center;
       justify-content: center;
-      background: var(--circle-bg);
-      color: var(--heading);
+      background: #f7f3ee;
+      color: var(--text);
       font-size: 14px;
-      font-weight: 600;
-      flex: 0 0 auto;
+      font-weight: 700;
+      flex-shrink: 0;
     }
 
     .list {
       display: flex;
       flex-direction: column;
-      gap: 13px;
+      gap: 12px;
       margin-top: 4px;
     }
 
@@ -114,31 +104,33 @@
       align-items: center;
       gap: 12px;
       font-size: 14px;
-      line-height: 1.2;
+      line-height: 1.25;
       color: var(--text);
     }
 
-    .dot {
+    .check {
       width: 16px;
       height: 16px;
       border-radius: 999px;
       border: 1.6px solid #cdbfaf;
+      background: #fff;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      flex: 0 0 auto;
-      background: #fff;
+      cursor: pointer;
+      flex-shrink: 0;
+      padding: 0;
     }
 
-    .dot.checked {
-      background: var(--green);
-      border-color: var(--green);
+    .check.checked {
+      background: var(--sage);
+      border-color: var(--sage);
     }
 
-    .dot.checked::after {
+    .check.checked::after {
       content: "✓";
+      color: white;
       font-size: 11px;
-      color: #fff;
       font-weight: 700;
       line-height: 1;
     }
@@ -147,35 +139,176 @@
       flex: 1;
     }
 
+    .label.custom::after {
+      content: " custom";
+      margin-left: 6px;
+      font-size: 10px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .edit-btn {
+      position: absolute;
+      right: 14px;
+      bottom: 13px;
+      border: 1px solid var(--border);
+      background: var(--cream);
+      color: #7a5c51;
+      border-radius: 999px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .edit-btn:hover {
+      background: #f5eee8;
+    }
+
+    .note {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+      margin-top: 4px;
+    }
+
+    .overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 253, 251, 0.96);
+      backdrop-filter: blur(3px);
+      border-radius: 18px;
+      padding: 18px;
+      z-index: 10;
+    }
+
+    .overlay.open {
+      display: block;
+    }
+
+    .overlay-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    input {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+      padding: 8px 10px;
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #d2c3b7;
+    }
+
+    .small-btn {
+      border: 1px solid var(--border);
+      background: var(--blush);
+      color: #6c5148;
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .custom-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 92px;
+      overflow: auto;
+      padding-right: 3px;
+      margin-bottom: 12px;
+    }
+
+    .custom-edit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      border: 1px solid #eee4dd;
+      background: #fffaf6;
+      border-radius: 10px;
+      padding: 7px 9px;
+    }
+
+    .remove-btn {
+      border: none;
+      background: transparent;
+      color: #b48a84;
+      cursor: pointer;
+      font-size: 15px;
+      line-height: 1;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
     .loading,
-    .error,
-    .empty-note {
+    .error {
       font-size: 13px;
       color: var(--muted);
       line-height: 1.5;
     }
-
-    .empty-note {
-      margin-top: 8px;
-    }
   </style>
 </head>
-<body>
-  <div class="widget">
-    <div class="card">
-      <div class="top">
-        <div class="title-wrap">
-          <svg class="sparkle" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 3L13.8 8.2L19 10L13.8 11.8L12 17L10.2 11.8L5 10L10.2 8.2L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-          </svg>
-          <div class="title">Beauty Today</div>
-        </div>
 
-        <div class="progress-circle" id="progressCircle">0/5</div>
+<body>
+  <div class="card">
+    <div class="top">
+      <div class="title-wrap">
+        <svg class="sparkle" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 3L13.8 8.2L19 10L13.8 11.8L12 17L10.2 11.8L5 10L10.2 8.2L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        <div class="title">Beauty Today</div>
       </div>
 
-      <div id="content">
-        <div class="loading">Loading beauty routine…</div>
+      <div class="progress-circle" id="progressCircle">0/0</div>
+    </div>
+
+    <div id="content">
+      <div class="loading">Loading beauty routine…</div>
+    </div>
+
+    <button class="edit-btn" onclick="openEdit()">Edit</button>
+
+    <div id="overlay" class="overlay">
+      <div class="overlay-title">Add beauty to-dos</div>
+
+      <div class="input-row">
+        <input id="newTaskInput" placeholder="e.g. Lip mask, gua sha, perfume">
+        <button class="small-btn" onclick="addCustomTask()">Add</button>
+      </div>
+
+      <div id="customList" class="custom-list"></div>
+
+      <div class="actions">
+        <button class="small-btn" onclick="closeEdit()">Done</button>
       </div>
     </div>
   </div>
@@ -183,13 +316,17 @@
   <script>
     const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
 
-    const beautyItems = [
-      "Haircare routine",
-      "Skincare",
-      "Body lotion",
-      "Perfume",
-      "Nails"
-    ];
+    let notionTasks = [];
+    let customTasks = [];
+    let checked = {};
+
+    function todayKey() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function storageKey(name) {
+      return `beauty-widget-${todayKey()}-${name}`;
+    }
 
     function normalise(text) {
       return (text || "")
@@ -200,93 +337,201 @@
         .trim();
     }
 
-    function parseBeautyText(raw) {
-      if (!raw) return [];
+    function tidyLabel(text) {
+      return (text || "")
+        .replace(/beauty today/gi, "")
+        .replace(/nothing right now/gi, "")
+        .replace(/[•✦✨]/g, "")
+        .trim();
+    }
 
-      return raw
+    function parseTasks(raw) {
+      const cleaned = tidyLabel(raw);
+
+      if (!cleaned) return [];
+
+      return cleaned
         .split(/,|\n|•|·|\/|;/)
-        .map(s => s.trim())
-        .filter(Boolean)
-        .map(normalise);
+        .map(task => tidyLabel(task))
+        .filter(Boolean);
     }
 
-    function getCheckedItems(apiBeautyText) {
-      const values = parseBeautyText(apiBeautyText);
-
-      return beautyItems.map(item => {
-        const n = normalise(item);
-
-        const checked =
-          values.includes(n) ||
-          (n === "haircare routine" && values.some(v => v.includes("haircare"))) ||
-          (n === "skincare" && values.some(v => v.includes("skincare"))) ||
-          (n === "body lotion" && values.some(v => v.includes("body lotion") || v.includes("lotion"))) ||
-          (n === "perfume" && values.some(v => v.includes("perfume") || v.includes("fragrance"))) ||
-          (n === "nails" && values.some(v => v.includes("nails") || v.includes("nail")));
-
-        return {
-          label: item,
-          checked
-        };
-      });
+    function loadStorage() {
+      try {
+        customTasks = JSON.parse(localStorage.getItem(storageKey("custom")) || "[]");
+        checked = JSON.parse(localStorage.getItem(storageKey("checked")) || "{}");
+      } catch {
+        customTasks = [];
+        checked = {};
+      }
     }
 
-    function renderList(items, rawBeautyText = "") {
-      const checkedCount = items.filter(item => item.checked).length;
-      document.getElementById("progressCircle").textContent = `${checkedCount}/${items.length}`;
+    function saveStorage() {
+      localStorage.setItem(storageKey("custom"), JSON.stringify(customTasks));
+      localStorage.setItem(storageKey("checked"), JSON.stringify(checked));
+    }
+
+    function taskId(label, source) {
+      return `${source}:${normalise(label)}`;
+    }
+
+    function allTasks() {
+      const fromNotion = notionTasks.map(label => ({
+        label,
+        source: "notion"
+      }));
+
+      const fromCustom = customTasks.map(label => ({
+        label,
+        source: "custom"
+      }));
+
+      return [...fromNotion, ...fromCustom];
+    }
+
+    function toggleTask(label, source) {
+      const id = taskId(label, source);
+      checked[id] = !checked[id];
+      saveStorage();
+      render();
+    }
+
+    function render() {
+      const tasks = allTasks();
+      const total = tasks.length;
+      const done = tasks.filter(task => checked[taskId(task.label, task.source)]).length;
+
+      document.getElementById("progressCircle").textContent = `${done}/${total}`;
 
       const content = document.getElementById("content");
       content.innerHTML = "";
 
+      if (!tasks.length) {
+        content.innerHTML = `<div class="note">No beauty tasks found yet. Click edit to add your own.</div>`;
+        renderCustomEditList();
+        return;
+      }
+
       const list = document.createElement("div");
       list.className = "list";
 
-      items.forEach(item => {
+      tasks.forEach(task => {
+        const id = taskId(task.label, task.source);
         const row = document.createElement("div");
         row.className = "item";
 
-        const dot = document.createElement("span");
-        dot.className = item.checked ? "dot checked" : "dot";
+        const button = document.createElement("button");
+        button.className = checked[id] ? "check checked" : "check";
+        button.onclick = () => toggleTask(task.label, task.source);
+        button.setAttribute("aria-label", `Toggle ${task.label}`);
 
         const label = document.createElement("span");
-        label.className = "label";
-        label.textContent = item.label;
+        label.className = task.source === "custom" ? "label custom" : "label";
+        label.textContent = task.label;
 
-        row.appendChild(dot);
+        row.appendChild(button);
         row.appendChild(label);
         list.appendChild(row);
       });
 
       content.appendChild(list);
-
-      if (!rawBeautyText || !rawBeautyText.trim()) {
-        const note = document.createElement("div");
-        note.className = "empty-note";
-        note.textContent = "No beauty routine detected yet.";
-        content.appendChild(note);
-      }
+      renderCustomEditList();
     }
 
-    function renderError(message) {
-      document.getElementById("progressCircle").textContent = "0/5";
-      document.getElementById("content").innerHTML = `<div class="error">${message}</div>`;
+    function renderCustomEditList() {
+      const customList = document.getElementById("customList");
+      customList.innerHTML = "";
+
+      if (!customTasks.length) {
+        customList.innerHTML = `<div class="note">Your custom tasks will appear here.</div>`;
+        return;
+      }
+
+      customTasks.forEach((task, index) => {
+        const row = document.createElement("div");
+        row.className = "custom-edit-item";
+
+        const label = document.createElement("span");
+        label.textContent = task;
+
+        const remove = document.createElement("button");
+        remove.className = "remove-btn";
+        remove.textContent = "×";
+        remove.onclick = () => removeCustomTask(index);
+
+        row.appendChild(label);
+        row.appendChild(remove);
+        customList.appendChild(row);
+      });
+    }
+
+    function addCustomTask() {
+      const input = document.getElementById("newTaskInput");
+      const value = input.value.trim();
+
+      if (!value) return;
+
+      customTasks.push(value);
+      input.value = "";
+      saveStorage();
+      render();
+    }
+
+    function removeCustomTask(index) {
+      const removed = customTasks[index];
+      const id = taskId(removed, "custom");
+
+      customTasks.splice(index, 1);
+      delete checked[id];
+
+      saveStorage();
+      render();
+    }
+
+    function openEdit() {
+      document.getElementById("overlay").classList.add("open");
+      renderCustomEditList();
+    }
+
+    function closeEdit() {
+      document.getElementById("overlay").classList.remove("open");
     }
 
     async function loadBeautyWidget() {
+      loadStorage();
+
       try {
         const response = await fetch(API_URL);
-        if (!response.ok) throw new Error("Could not load dashboard data.");
+
+        if (!response.ok) {
+          throw new Error("Could not load dashboard data.");
+        }
 
         const data = await response.json();
-        const rawBeautyText = data.beautyToday || "";
 
-        const checkedItems = getCheckedItems(rawBeautyText);
-        renderList(checkedItems, rawBeautyText);
+        notionTasks = parseTasks(data.beautyToday || "");
+
+        notionTasks.forEach(task => {
+          const id = taskId(task, "notion");
+
+          if (checked[id] === undefined) {
+            checked[id] = false;
+          }
+        });
+
+        saveStorage();
+        render();
       } catch (error) {
-        renderError("Could not load beauty routine.");
+        document.getElementById("content").innerHTML = `<div class="error">Could not load Beauty Today.</div>`;
         console.error(error);
       }
     }
+
+    document.getElementById("newTaskInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        addCustomTask();
+      }
+    });
 
     loadBeautyWidget();
   </script>
