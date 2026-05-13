@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --card: #fffdfb;
+      --border: #e9e1d8;
+      --text: #5f5449;
+      --muted: #a79a8a;
+      --sage: #aab39a;
+      --sage-dark: #8d977c;
+      --blush: #f3e6df;
+      --cream: #fffaf6;
+      --soft-pink: #e8cbc2;
+      --shadow: rgba(95, 84, 73, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: "Inter", sans-serif;
+      color: var(--text);
+      overflow: hidden;
+    }
+
+    body {
+      padding: 8px;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 320px;
+      min-height: 225px;
+      margin: 0 auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px 18px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 28px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .icon {
+      width: 22px;
+      height: 22px;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      white-space: nowrap;
+    }
+
+    .content {
+      position: relative;
+      z-index: 2;
+      width: 58%;
+    }
+
+    .workout-name {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 27px;
+      line-height: 1.02;
+      font-weight: 500;
+      color: #4d4038;
+      margin-bottom: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .duration {
+      font-size: 13px;
+      font-weight: 500;
+      color: #7d6e62;
+    }
+
+    .status {
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 23px;
+      line-height: 1.08;
+      color: #4d4038;
+      margin-top: 4px;
+    }
+
+    .status-note {
+      font-size: 13px;
+      line-height: 1.45;
+      color: var(--muted);
+      margin-top: 12px;
+      max-width: 150px;
+    }
+
+    .illustration {
+      position: absolute;
+      right: 18px;
+      bottom: 23px;
+      width: 124px;
+      height: 118px;
+      z-index: 1;
+    }
+
+    .bottle {
+      position: absolute;
+      right: 22px;
+      bottom: 28px;
+      width: 36px;
+      height: 86px;
+      border-radius: 14px 14px 10px 10px;
+      background: linear-gradient(180deg, #ead1ca 0%, #d4a99f 100%);
+      box-shadow: 0 7px 14px var(--shadow);
+    }
+
+    .bottle::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 9px;
+      width: 18px;
+      height: 12px;
+      border-radius: 5px 5px 2px 2px;
+      background: #8b786d;
+    }
+
+    .bottle::after {
+      content: "";
+      position: absolute;
+      top: 14px;
+      left: 8px;
+      width: 20px;
+      height: 46px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .mat {
+      position: absolute;
+      left: 5px;
+      bottom: 10px;
+      width: 80px;
+      height: 30px;
+      border-radius: 999px;
+      background: #d8b2aa;
+      transform: rotate(-16deg);
+      box-shadow: 0 8px 14px var(--shadow);
+    }
+
+    .mat::before {
+      content: "";
+      position: absolute;
+      left: -2px;
+      top: 2px;
+      width: 31px;
+      height: 31px;
+      border-radius: 999px;
+      background: radial-gradient(circle at center, #f5e8e2 0 28%, #cfa49c 30% 100%);
+      box-shadow: inset 0 0 0 1px rgba(123, 94, 84, 0.08);
+    }
+
+    .dumbbell {
+      position: absolute;
+      left: 60px;
+      bottom: 2px;
+      width: 38px;
+      height: 18px;
+      transform: rotate(-10deg);
+    }
+
+    .dumbbell::before,
+    .dumbbell::after {
+      content: "";
+      position: absolute;
+      top: 1px;
+      width: 17px;
+      height: 17px;
+      border-radius: 999px;
+      background: #ead8d0;
+      box-shadow: 0 4px 8px var(--shadow);
+    }
+
+    .dumbbell::before {
+      left: 0;
+    }
+
+    .dumbbell::after {
+      right: 0;
+    }
+
+    .bar {
+      position: absolute;
+      top: 7px;
+      left: 12px;
+      width: 16px;
+      height: 5px;
+      border-radius: 999px;
+      background: #d2b4aa;
+    }
+
+    .soft-blob {
+      position: absolute;
+      right: -28px;
+      bottom: -32px;
+      width: 150px;
+      height: 150px;
+      border-radius: 999px;
+      background: rgba(243, 230, 223, 0.42);
+      z-index: 0;
+    }
+
+    .edit-btn {
+      position: absolute;
+      right: 14px;
+      bottom: 13px;
+      border: 1px solid var(--border);
+      background: var(--cream);
+      color: #7a5c51;
+      border-radius: 999px;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-weight: 600;
+      z-index: 4;
+    }
+
+    .edit-btn:hover {
+      background: #f5eee8;
+    }
+
+    .overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 253, 251, 0.96);
+      backdrop-filter: blur(3px);
+      border-radius: 18px;
+      padding: 18px;
+      z-index: 10;
+    }
+
+    .overlay.open {
+      display: block;
+    }
+
+    .overlay-title {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .input-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      margin-bottom: 14px;
+    }
+
+    input {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: white;
+      padding: 9px 10px;
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #d2c3b7;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .small-btn {
+      border: 1px solid var(--border);
+      background: var(--blush);
+      color: #6c5148;
+      border-radius: 999px;
+      padding: 8px 11px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .secondary {
+      background: var(--cream);
+    }
+
+    .loading,
+    .error {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <div class="soft-blob"></div>
+
+    <div class="top">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 9V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M19 9V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M8 7V17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M16 7V17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M8 12H16" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M3.5 10.5V13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+        <path d="M20.5 10.5V13.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+      </svg>
+
+      <div class="title">Workout</div>
+    </div>
+
+    <div id="content" class="content">
+      <div class="loading">Loading workout…</div>
+    </div>
+
+    <div class="illustration" aria-hidden="true">
+      <div class="bottle"></div>
+      <div class="mat"></div>
+      <div class="dumbbell">
+        <div class="bar"></div>
+      </div>
+    </div>
+
+    <button class="edit-btn" onclick="openEdit()">Edit</button>
+
+    <div id="overlay" class="overlay">
+      <div class="overlay-title">Edit workout</div>
+
+      <div class="input-stack">
+        <input id="workoutInput" placeholder="e.g. Lower Body Workout">
+        <input id="durationInput" placeholder="e.g. 45 min">
+      </div>
+
+      <div class="actions">
+        <button class="small-btn secondary" onclick="clearCustom()">Clear</button>
+        <button class="small-btn" onclick="saveCustom()">Save</button>
+        <button class="small-btn secondary" onclick="closeEdit()">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
+
+    let apiWorkout = "";
+    let customWorkout = "";
+    let customDuration = "";
+
+    function todayKey() {
+      return new Date().toISOString().split("T")[0];
+    }
+
+    function storageKey(name) {
+      return `workout-widget-${todayKey()}-${name}`;
+    }
+
+    function tidyWorkout(text) {
+      return (text || "")
+        .replace(/workout/gi, "")
+        .replace(/nothing planned for today/gi, "")
+        .replace(/[•✦✨]/g, "")
+        .trim();
+    }
+
+    function titleCaseFallback(text) {
+      const cleaned = tidyWorkout(text);
+      return cleaned || "";
+    }
+
+    function loadStorage() {
+      customWorkout = localStorage.getItem(storageKey("customWorkout")) || "";
+      customDuration = localStorage.getItem(storageKey("customDuration")) || "";
+    }
+
+    function saveStorage() {
+      localStorage.setItem(storageKey("customWorkout"), customWorkout);
+      localStorage.setItem(storageKey("customDuration"), customDuration);
+    }
+
+    function getDisplayWorkout() {
+      return customWorkout || titleCaseFallback(apiWorkout);
+    }
+
+    function getDisplayDuration() {
+      return customDuration || "45 min";
+    }
+
+    function render() {
+      const content = document.getElementById("content");
+      const workout = getDisplayWorkout();
+
+      if (!workout) {
+        content.innerHTML = `
+          <div class="status">No workout planned</div>
+          <div class="status-note">Add one manually or link one in your Notion Daily Dashboard.</div>
+        `;
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="workout-name">${escapeHTML(workout)}</div>
+        <div class="duration">${escapeHTML(getDisplayDuration())}</div>
+      `;
+    }
+
+    function escapeHTML(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    function openEdit() {
+      document.getElementById("overlay").classList.add("open");
+      document.getElementById("workoutInput").value = getDisplayWorkout();
+      document.getElementById("durationInput").value = customDuration || "45 min";
+    }
+
+    function closeEdit() {
+      document.getElementById("overlay").classList.remove("open");
+    }
+
+    function saveCustom() {
+      customWorkout = document.getElementById("workoutInput").value.trim();
+      customDuration = document.getElementById("durationInput").value.trim();
+      saveStorage();
+      render();
+    }
+
+    function clearCustom() {
+      customWorkout = "";
+      customDuration = "";
+      localStorage.removeItem(storageKey("customWorkout"));
+      localStorage.removeItem(storageKey("customDuration"));
+      document.getElementById("workoutInput").value = titleCaseFallback(apiWorkout);
+      document.getElementById("durationInput").value = "45 min";
+      render();
+    }
+
+    async function loadWorkoutWidget() {
+      loadStorage();
+
+      try {
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+          throw new Error("Could not load dashboard data.");
+        }
+
+        const data = await response.json();
+        apiWorkout = data.workout || "";
+
+        render();
+      } catch (error) {
+        document.getElementById("content").innerHTML = `<div class="error">Could not load workout.</div>`;
+        console.error(error);
+      }
+    }
+
+    document.getElementById("workoutInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        saveCustom();
+      }
+    });
+
+    document.getElementById("durationInput").addEventListener("keydown", function(event) {
+      if (event.key === "Enter") {
+        saveCustom();
+      }
+    });
+
+    loadWorkoutWidget();
+  </script>
+</body>
+</html>
