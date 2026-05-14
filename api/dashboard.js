@@ -203,17 +203,15 @@ function extractLine(text, label) {
   return match ? match[1].trim() : "";
 }
 
-async function getTodayDashboard(today) {
+/**
+ * This loads the same permanent Daily Dashboard card every day.
+ * It no longer searches for a row where Date = today.
+ */
+async function getDashboardCard() {
   const databaseId = process.env.DAILY_DASHBOARD_DATABASE_ID;
 
   const response = await notion.databases.query({
     database_id: databaseId,
-    filter: {
-      property: "Date",
-      date: {
-        equals: today,
-      },
-    },
     page_size: 1,
   });
 
@@ -413,17 +411,16 @@ module.exports = async function handler(req, res) {
 
     const today = getTodayISO();
 
-    const dashboard = await getTodayDashboard(today);
+    const dashboard = await getDashboardCard();
 
     if (!dashboard) {
       return res.status(404).json({
-        error: "No Daily Dashboard row found for today",
-        today,
+        error: "No Daily Dashboard card found",
       });
     }
 
     const meals = await getTodayMeals(today);
-    
+
     res.setHeader("Cache-Control", "s-maxage=60, stale-while-revalidate=300");
 
     return res.status(200).json({
