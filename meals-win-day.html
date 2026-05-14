@@ -15,6 +15,7 @@
       --muted: #9b8b80;
       --row: #fffaf7;
       --shadow: rgba(79, 64, 56, 0.04);
+      --error: #9b5f55;
     }
 
     * {
@@ -46,6 +47,14 @@
       box-shadow: 0 8px 24px var(--shadow);
     }
 
+    .top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
     .title {
       font-family: "Playfair Display", serif;
       font-size: 30px;
@@ -53,7 +62,16 @@
       line-height: 1;
       letter-spacing: -0.03em;
       color: var(--text);
-      margin-bottom: 18px;
+    }
+
+    .date {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--muted);
+      text-align: right;
+      line-height: 1.4;
+      padding-top: 4px;
+      white-space: nowrap;
     }
 
     .meals {
@@ -88,6 +106,19 @@
       color: var(--text);
     }
 
+    .status {
+      margin-top: 14px;
+      padding-top: 13px;
+      border-top: 1px solid var(--border);
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .error {
+      color: var(--error);
+    }
+
     @media (min-width: 560px) {
       .card {
         padding: 24px;
@@ -112,30 +143,125 @@
 <body>
   <div class="widget">
     <div class="card">
-      <div class="title">Meal Plan</div>
-
-      <div class="meals">
-        <div class="meal">
-          <div class="meal-label">Breakfast</div>
-          <div class="meal-name">Greek yoghurt bowl with berries, honey & granola</div>
-        </div>
-
-        <div class="meal">
-          <div class="meal-label">Lunch</div>
-          <div class="meal-name">Chicken rice bowl with cucumber, herbs & lemon yoghurt</div>
-        </div>
-
-        <div class="meal">
-          <div class="meal-label">Dinner</div>
-          <div class="meal-name">Warm salmon, potatoes & roasted vegetables</div>
-        </div>
-
-        <div class="meal">
-          <div class="meal-label">Snack</div>
-          <div class="meal-name">Dark chocolate, fruit or a protein drink</div>
-        </div>
+      <div class="top">
+        <div class="title">Meal Plan</div>
+        <div class="date" id="todayDate"></div>
       </div>
+
+      <div class="meals" id="mealList"></div>
+
+      <div class="status" id="status">Loading today’s meals…</div>
     </div>
   </div>
+
+  <script>
+    const API_ENDPOINT = "/api/dashboard";
+
+    const mealList = document.getElementById("mealList");
+    const statusBox = document.getElementById("status");
+    const todayDate = document.getElementById("todayDate");
+
+    const today = new Date();
+
+    todayDate.textContent = today.toLocaleDateString("en-GB", {
+      weekday: "long",
+      day: "numeric",
+      month: "long"
+    });
+
+    function cleanMealText(value) {
+      if (!value) return "";
+
+      return String(value)
+        .replace(/Beauty Today/g, "")
+        .replace(/Workout/g, "")
+        .replace(/Meals Today/g, "")
+        .replace(/Nothing planned for today/gi, "")
+        .replace(/Nothing right now/gi, "")
+        .replace(/\d+ linked/gi, "")
+        .trim();
+    }
+
+    function createMeal(label, name) {
+      const mealItem = document.createElement("div");
+      mealItem.className = "meal";
+
+      mealItem.innerHTML = `
+        <div class="meal-label">${label}</div>
+        <div class="meal-name">${name}</div>
+      `;
+
+      return mealItem;
+    }
+
+    function renderMeals(data) {
+      mealList.innerHTML = "";
+
+      const meals = [
+        {
+          label: "Breakfast",
+          name: cleanMealText(data.breakfast)
+        },
+        {
+          label: "Lunch",
+          name: cleanMealText(data.lunch)
+        },
+        {
+          label: "Dinner",
+          name: cleanMealText(data.dinner)
+        },
+        {
+          label: "Snack",
+          name: cleanMealText(data.snacks)
+        }
+      ];
+
+      const plannedMeals = meals.filter(meal => meal.name);
+
+      if (plannedMeals.length === 0) {
+        mealList.appendChild(
+          createMeal("Today", "No meals planned for today yet")
+        );
+
+        statusBox.textContent = "Connected, but nothing is filled in for today.";
+        return;
+      }
+
+      plannedMeals.forEach(meal => {
+        mealList.appendChild(createMeal(meal.label, meal.name));
+      });
+
+      statusBox.textContent = "Synced from Notion ✨";
+    }
+
+    async function loadMeals() {
+      try {
+        const response = await fetch(API_ENDPOINT);
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || "Could not load meals");
+        }
+
+        const data = await response.json();
+
+        console.log("Dashboard API data:", data);
+
+        renderMeals(data);
+      } catch (error) {
+        console.error("Meal widget sync error:", error);
+
+        mealList.innerHTML = "";
+        mealList.appendChild(
+          createMeal("Error", "Couldn’t load today’s meals")
+        );
+
+        statusBox.textContent = "Check that /api/dashboard works and your Notion database is shared with the integration.";
+        statusBox.classList.add("error");
+      }
+    }
+
+    loadMeals();
+  </script>
 </body>
 </html>
