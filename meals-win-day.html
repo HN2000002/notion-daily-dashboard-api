@@ -4,18 +4,17 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
 
   <style>
     :root {
       --card: #fffdfb;
       --border: #eadfd6;
-      --text: #5b4d43;
-      --muted: #a99b8f;
-      --cream: #fff9f4;
-      --blush: #f7eee9;
-      --line: #f0e6df;
-      --shadow: rgba(99, 82, 70, 0.08);
+      --text: #4f4038;
+      --muted: #9b8b80;
+      --soft: #f8f1ec;
+      --accent: #b98d7d;
+      --shadow: rgba(79, 64, 56, 0.06);
     }
 
     * {
@@ -26,233 +25,116 @@
     body {
       margin: 0;
       padding: 0;
+      width: 100%;
       background: transparent;
       font-family: "Inter", sans-serif;
       color: var(--text);
       overflow: hidden;
     }
 
-    body {
-      padding: 8px;
-    }
-
     .widget {
       width: 100%;
+      padding: 14px;
     }
 
     .card {
       width: 100%;
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 20px 22px 18px;
-      position: relative;
-      overflow: hidden;
-      min-height: 210px;
-      box-shadow: 0 10px 30px var(--shadow);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: 0 10px 28px var(--shadow);
     }
 
-    .card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at top left, rgba(247, 238, 233, 0.7), transparent 32%),
-        linear-gradient(180deg, rgba(255,255,255,0.5), transparent);
-      pointer-events: none;
-    }
-
-    .inner {
-      position: relative;
-      z-index: 2;
-    }
-
-    .top {
+    .header {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 18px;
+      gap: 16px;
+      margin-bottom: 20px;
     }
 
-    .heading {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-    }
-
-    .icon {
-      width: 18px;
-      height: 18px;
-      color: #b3a291;
-      flex-shrink: 0;
+    .eyebrow {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 6px;
     }
 
     .title {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: #6a5a4f;
-      line-height: 1;
+      font-family: "Playfair Display", serif;
+      font-size: 28px;
+      font-weight: 600;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      color: var(--text);
     }
 
-    .subtle-date {
+    .status {
+      padding: 7px 11px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--soft);
+      color: var(--accent);
       font-size: 11px;
-      color: var(--muted);
-      font-weight: 500;
+      font-weight: 600;
       white-space: nowrap;
     }
 
-    .meal-list {
+    .meals {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      padding-bottom: 28px;
+      grid-template-columns: 1fr;
+      gap: 10px;
     }
 
-    .meal-box {
-      border: 1px solid var(--line);
-      background: rgba(255, 250, 246, 0.72);
-      border-radius: 15px;
-      padding: 14px 14px 13px;
-      min-height: 84px;
+    .meal {
+      display: grid;
+      grid-template-columns: 82px 1fr;
+      gap: 14px;
+      align-items: center;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: #fffaf7;
     }
 
     .meal-label {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #a08f82;
-      margin-bottom: 8px;
-      line-height: 1;
+      color: var(--muted);
     }
 
     .meal-name {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 500;
+      color: var(--text);
       line-height: 1.35;
-      color: #4f443d;
     }
 
-    .empty {
-      color: var(--muted);
-      font-style: italic;
-      font-weight: 400;
-    }
-
-    .edit-btn {
-      position: absolute;
-      right: 16px;
-      bottom: 14px;
-      border: 1px solid var(--border);
-      background: var(--cream);
-      color: #7b5d52;
-      border-radius: 999px;
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 5px 12px;
-      cursor: pointer;
-      font-weight: 700;
-      z-index: 5;
-    }
-
-    .edit-btn:hover {
-      background: #f6eee8;
-    }
-
-    .overlay {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: rgba(255, 253, 251, 0.98);
-      backdrop-filter: blur(4px);
-      border-radius: 20px;
-      padding: 20px;
-      z-index: 10;
-    }
-
-    .overlay.open {
-      display: block;
-    }
-
-    .overlay-title {
+    .note {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
       font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-      color: var(--text);
-    }
-
-    .input-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-
-    input {
-      width: 100%;
-      min-width: 0;
-      border: 1px solid var(--border);
-      border-radius: 13px;
-      background: white;
-      padding: 10px 12px;
-      font-family: "Inter", sans-serif;
-      font-size: 13px;
-      color: var(--text);
-      outline: none;
-    }
-
-    input:focus {
-      border-color: #d3c2b6;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .small-btn {
-      border: 1px solid var(--border);
-      background: var(--blush);
-      color: #6e5348;
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-
-    .small-btn.secondary {
-      background: var(--cream);
-    }
-
-    .loading {
-      font-size: 13px;
+      line-height: 1.6;
       color: var(--muted);
-      line-height: 1.5;
     }
 
-    @media (max-width: 650px) {
-      .meal-list {
-        grid-template-columns: 1fr;
-      }
-
+    @media (min-width: 560px) {
       .card {
-        min-height: 320px;
+        padding: 26px;
       }
 
-      .subtle-date {
-        display: none;
+      .title {
+        font-size: 34px;
+      }
+
+      .meal-name {
+        font-size: 15px;
       }
     }
   </style>
@@ -261,213 +143,41 @@
 <body>
   <div class="widget">
     <div class="card">
-      <div class="inner">
-        <div class="top">
-          <div class="heading">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M7 3V11" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-              <path d="M5 3V7.5C5 9.2 5.9 10.4 7 10.4C8.1 10.4 9 9.2 9 7.5V3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-              <path d="M7 11V21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-              <path d="M16 3C18.2 4.6 19 7 18.3 9.5C17.8 11.2 16.8 12.4 15.7 12.8V21" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
-            </svg>
-            <div class="title">Meals</div>
-          </div>
-
-          <div id="todayDate" class="subtle-date"></div>
+      <div class="header">
+        <div>
+          <div class="eyebrow">Meal plan</div>
+          <div class="title">Win the day</div>
         </div>
 
-        <div id="mealsContent">
-          <div class="loading">Loading meals…</div>
+        <div class="status">Nourished</div>
+      </div>
+
+      <div class="meals">
+        <div class="meal">
+          <div class="meal-label">Breakfast</div>
+          <div class="meal-name">Greek yoghurt bowl with berries, honey & granola</div>
+        </div>
+
+        <div class="meal">
+          <div class="meal-label">Lunch</div>
+          <div class="meal-name">Chicken rice bowl with cucumber, herbs & lemon yoghurt</div>
+        </div>
+
+        <div class="meal">
+          <div class="meal-label">Dinner</div>
+          <div class="meal-name">Warm salmon, potatoes & roasted vegetables</div>
+        </div>
+
+        <div class="meal">
+          <div class="meal-label">Snack</div>
+          <div class="meal-name">Dark chocolate, fruit or a protein drink</div>
         </div>
       </div>
 
-      <button class="edit-btn" onclick="openMealsEdit()">Edit</button>
-
-      <div id="mealsOverlay" class="overlay">
-        <div class="overlay-title">Edit meals</div>
-
-        <div class="input-stack">
-          <input id="breakfastInput" placeholder="Breakfast">
-          <input id="lunchInput" placeholder="Lunch">
-          <input id="dinnerInput" placeholder="Dinner">
-        </div>
-
-        <div class="actions">
-          <button class="small-btn secondary" onclick="clearMealsCustom()">Clear</button>
-          <button class="small-btn" onclick="saveMealsCustom()">Save</button>
-          <button class="small-btn secondary" onclick="closeMealsEdit()">Done</button>
-        </div>
+      <div class="note">
+        Soft structure for the day — simple meals, enough protein, and no overthinking.
       </div>
     </div>
   </div>
-
-  <script>
-    const API_URL = "https://notion-daily-dashboard-api.vercel.app/api/dashboard";
-
-    let apiMeals = {
-      breakfast: "",
-      lunch: "",
-      dinner: ""
-    };
-
-    let customMeals = {
-      breakfast: "",
-      lunch: "",
-      dinner: ""
-    };
-
-    function todayKey() {
-      return new Date().toISOString().split("T")[0];
-    }
-
-    function storageKey(name) {
-      return `minimal-meals-${todayKey()}-${name}`;
-    }
-
-    function escapeHTML(str) {
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function cleanMeal(text) {
-      return (text || "")
-        .replace(/meals today/gi, "")
-        .replace(/nothing planned for today/gi, "")
-        .replace(/[•✨✦]/g, "")
-        .trim();
-    }
-
-    function getMeal(type) {
-      return cleanMeal(customMeals[type]) || cleanMeal(apiMeals[type]) || "";
-    }
-
-    function renderMealBox(label, type) {
-      const value = getMeal(type);
-
-      return `
-        <div class="meal-box">
-          <div class="meal-label">${label}</div>
-          <div class="meal-name ${value ? "" : "empty"}">
-            ${value ? escapeHTML(value) : "Not planned"}
-          </div>
-        </div>
-      `;
-    }
-
-    function renderMeals() {
-      const content = document.getElementById("mealsContent");
-
-      content.innerHTML = `
-        <div class="meal-list">
-          ${renderMealBox("Breakfast", "breakfast")}
-          ${renderMealBox("Lunch", "lunch")}
-          ${renderMealBox("Dinner", "dinner")}
-        </div>
-      `;
-    }
-
-    function setDate() {
-      const date = new Date().toLocaleDateString("en-GB", {
-        weekday: "long",
-        day: "numeric",
-        month: "long"
-      });
-
-      document.getElementById("todayDate").textContent = date;
-    }
-
-    function openMealsEdit() {
-      document.getElementById("mealsOverlay").classList.add("open");
-      document.getElementById("breakfastInput").value = getMeal("breakfast");
-      document.getElementById("lunchInput").value = getMeal("lunch");
-      document.getElementById("dinnerInput").value = getMeal("dinner");
-    }
-
-    function closeMealsEdit() {
-      document.getElementById("mealsOverlay").classList.remove("open");
-    }
-
-    function saveMealsCustom() {
-      customMeals.breakfast = document.getElementById("breakfastInput").value.trim();
-      customMeals.lunch = document.getElementById("lunchInput").value.trim();
-      customMeals.dinner = document.getElementById("dinnerInput").value.trim();
-
-      localStorage.setItem(storageKey("customMeals"), JSON.stringify(customMeals));
-      renderMeals();
-    }
-
-    function clearMealsCustom() {
-      customMeals = {
-        breakfast: "",
-        lunch: "",
-        dinner: ""
-      };
-
-      localStorage.removeItem(storageKey("customMeals"));
-
-      document.getElementById("breakfastInput").value = "";
-      document.getElementById("lunchInput").value = "";
-      document.getElementById("dinnerInput").value = "";
-
-      renderMeals();
-    }
-
-    function loadStorage() {
-      try {
-        customMeals = JSON.parse(localStorage.getItem(storageKey("customMeals")) || "{}");
-      } catch {
-        customMeals = {};
-      }
-
-      customMeals = {
-        breakfast: customMeals.breakfast || "",
-        lunch: customMeals.lunch || "",
-        dinner: customMeals.dinner || ""
-      };
-    }
-
-    async function loadMealsFromAPI() {
-      setDate();
-      loadStorage();
-      renderMeals();
-
-      try {
-        const response = await fetch(API_URL);
-
-        if (!response.ok) {
-          throw new Error("Could not load dashboard data.");
-        }
-
-        const data = await response.json();
-
-        apiMeals = {
-          breakfast: data.breakfast || "",
-          lunch: data.lunch || "",
-          dinner: data.dinner || ""
-        };
-
-        renderMeals();
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
-    document.addEventListener("keydown", function(event) {
-      if (event.key === "Escape") {
-        closeMealsEdit();
-      }
-
-      const mealsOpen = document.getElementById("mealsOverlay").classList.contains("open");
-      if (mealsOpen && event.key === "Enter") {
-        saveMealsCustom();
-      }
-    });
-
-    loadMealsFromAPI();
-  </script>
 </body>
 </html>
