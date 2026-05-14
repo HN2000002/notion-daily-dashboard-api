@@ -47,14 +47,6 @@
       box-shadow: 0 8px 24px var(--shadow);
     }
 
-    .top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 14px;
-      margin-bottom: 18px;
-    }
-
     .title {
       font-family: "Playfair Display", serif;
       font-size: 30px;
@@ -62,16 +54,7 @@
       line-height: 1;
       letter-spacing: -0.03em;
       color: var(--text);
-    }
-
-    .date {
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--muted);
-      text-align: right;
-      line-height: 1.4;
-      padding-top: 4px;
-      white-space: nowrap;
+      margin-bottom: 18px;
     }
 
     .meals {
@@ -106,19 +89,6 @@
       color: var(--text);
     }
 
-    .status {
-      margin-top: 14px;
-      padding-top: 13px;
-      border-top: 1px solid var(--border);
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--muted);
-    }
-
-    .error {
-      color: var(--error);
-    }
-
     @media (min-width: 560px) {
       .card {
         padding: 24px;
@@ -143,14 +113,9 @@
 <body>
   <div class="widget">
     <div class="card">
-      <div class="top">
-        <div class="title">Meal Plan</div>
-        <div class="date" id="todayDate"></div>
-      </div>
+      <div class="title">Meal Plan</div>
 
       <div class="meals" id="mealList"></div>
-
-      <div class="status" id="status">Loading today’s meals…</div>
     </div>
   </div>
 
@@ -158,16 +123,6 @@
     const API_ENDPOINT = "/api/dashboard";
 
     const mealList = document.getElementById("mealList");
-    const statusBox = document.getElementById("status");
-    const todayDate = document.getElementById("todayDate");
-
-    const today = new Date();
-
-    todayDate.textContent = today.toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "long"
-    });
 
     function cleanMealText(value) {
       if (!value) return "";
@@ -222,16 +177,12 @@
         mealList.appendChild(
           createMeal("Today", "No meals planned for today yet")
         );
-
-        statusBox.textContent = "Connected, but nothing is filled in for today.";
         return;
       }
 
       plannedMeals.forEach(meal => {
         mealList.appendChild(createMeal(meal.label, meal.name));
       });
-
-      statusBox.textContent = "Synced from Notion ✨";
     }
 
     async function loadMeals() {
@@ -239,14 +190,10 @@
         const response = await fetch(API_ENDPOINT);
 
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(errorText || "Could not load meals");
+          throw new Error("Could not load meals");
         }
 
         const data = await response.json();
-
-        console.log("Dashboard API data:", data);
-
         renderMeals(data);
       } catch (error) {
         console.error("Meal widget sync error:", error);
@@ -255,9 +202,6 @@
         mealList.appendChild(
           createMeal("Error", "Couldn’t load today’s meals")
         );
-
-        statusBox.textContent = "Check that /api/dashboard works and your Notion database is shared with the integration.";
-        statusBox.classList.add("error");
       }
     }
 
