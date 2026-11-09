@@ -30,7 +30,7 @@ function taskFromPage(page, key) {
 async function queryPages(notion, source, filter) {
   const results = []; let cursor;
   do {
-    const response = await notion.databases.query({database_id:source.database, page_size:100, ...(cursor?{start_cursor:cursor}:{}), ...(filter?{filter}:{})});
+    const response = await notion.request({path:'data_sources/'+source.collection+'/query',method:'post',body:{page_size:100, ...(cursor?{start_cursor:cursor}:{}), ...(filter?{filter}:{})}});
     results.push(...response.results); cursor=response.has_more?response.next_cursor:null;
   } while (cursor && results.length < 400);
   return {results, hasMore:Boolean(cursor)};
@@ -68,7 +68,7 @@ module.exports=async function handler(req,res) {
   const read=body.action==='read'&&Object.hasOwn(SOURCES,body.source);
   const write=body.action==='setTask'&&UUID.test(body.taskId)&&['Done','Not started','In progress'].includes(body.status);
   if(!read&&!write)return send(res,400,{status:'error',code:'invalid_request',message:'Unsupported task or goal action.'});
-  const notion=new Client({auth:process.env.NOTION_TOKEN,maxRetries:0});
+  const notion=new Client({auth:process.env.NOTION_TOKEN,notionVersion:'2025-09-03',maxRetries:0});
   try{
     const data=read?await readSource(notion,body.source):await setTask(notion,body.taskId,body.status);
     return send(res,200,{status:'success',data,updatedAt:new Date().toISOString()});
@@ -76,7 +76,9 @@ module.exports=async function handler(req,res) {
     const rateLimited=error.status===429||error.code==='rate_limited';
     if(rateLimited)res.setHeader('Retry-After','10');
     const status=rateLimited?429:error.status===403||error.status===404?error.status:error.status===409?409:502;
-    const message=rateLimited?'Notion is busy. Please wait a moment before refreshing.':status===404||status===403?'The widget connection needs access to this Notion database. Open it in Notion and add the same connection used by your existing widgets.':status===409?error.message:write?'The update could not be confirmed. Refresh before trying again.':'Notion could not be refreshed. Please try again.';
+    let connectionName='your existing widget';
+    if(status===403||status===404){try{const self=await notion.users.me({});if(self.name)connectionName=self.name;}catch{}}
+    const message=rateLimited?'Notion is busy. Please wait a moment before refreshing.':status===404||status===403?'The '+connectionName+' connection needs access to this Notion database. Open the original database in Notion and add this connection.':status===409?error.message:write?'The update could not be confirmed. Refresh before trying again.':'Notion could not be refreshed. Please try again.';
     return send(res,status,{status:'error',code:rateLimited?'rate_limited':status===403||status===404?'notion_access_required':'provider_error',message});
   }
 };
