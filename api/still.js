@@ -1,8 +1,10 @@
 const { Client } = require('@notionhq/client');
-const { createHash, timingSafeEqual } = require('node:crypto');
+const { createPublicKey, verify } = require('node:crypto');
 
 // This route extends the existing widget connection. Its Notion token stays in Vercel.
-// Only the owner-private Still server receives the separate STILL_SYNC_KEY.
+// Only the owner-private Still server holds the signing key. This verification key is public.
+const PUBLIC_JWK = {"kty":"EC","x":"xqlkVRJfQHpWpOKyXzVwJsTM5F8ZlITo3lFYlBpGafw","y":"ea3v1SYr2XgS40Kh0iWp9TTNHIJzbVhHP6ArAtM6pk8","crv":"P-256"};
+const PUBLIC_KEY = createPublicKey({key:PUBLIC_JWK,format:'jwk'});
 const SOURCES = Object.freeze({
   goalTasks: { database: '2e4cd388-8383-81f3-9ed6-cb3b8f5e190c', collection: '2e4cd388-8383-8193-b29a-000bac6c611b', title: 'Task name', date: 'Target date', label: 'Goal steps' },
   everydayTasks: { database: '213cd388-8383-80d9-b893-ebbb1c52faf9', collection: '213cd388-8383-81fd-a530-000b42e8dce6', title: 'Name', date: 'Due Date', label: 'Everyday' },
@@ -12,11 +14,10 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const normalizeId = value => String(value || '').replace(/-/g, '').toLowerCase();
 const titleText = property => (property?.title || []).map(t => t.plain_text || t.text?.content || '').join('');
 function todayLondon() { return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year:'numeric',month:'2-digit',day:'2-digit' }).format(new Date()); }
-function authorized(req) {
-  const secret = process.env.STILL_SYNC_KEY;
-  const bearer = req.headers.authorization;
-  if (!secret || secret.length < 40 || typeof bearer !== 'string' || !bearer.startsWith('Bearer ') || bearer.length > 256) return false;
-  return timingSafeEqual(createHash('sha256').update(bearer.slice(7)).digest(), createHash('sha256').update(secret).digest());
+function authorized(req,body) {
+  const timestamp=req.headers['x-still-timestamp'],signature=req.headers['x-still-signature'];
+  if(typeof timestamp!=='string'||!/^\d{13}$/.test(timestamp)||Math.abs(Date.now()-Number(timestamp))>90000||typeof signature!=='string'||! /^[A-Za-z0-9_-]{86}$/.test(signature))return false;
+  try{return verify('sha256',Buffer.from(timestamp+'.'+JSON.stringify(body)),{key:PUBLIC_KEY,dsaEncoding:'ieee-p1363'},Buffer.from(signature,'base64url'));}catch{return false;}
 }
 function send(res, status, body) { return res.status(status).json(body); }
 function taskFromPage(page, key) {
@@ -60,11 +61,10 @@ async function setTask(notion, taskId, status) {
 module.exports=async function handler(req,res) {
   res.setHeader('Cache-Control','private, no-store');res.setHeader('X-Content-Type-Options','nosniff');
   if(req.method!=='POST'){res.setHeader('Allow','POST');return send(res,405,{status:'error',code:'method_not_allowed',message:'Use POST.'});}
-  if(!process.env.STILL_SYNC_KEY)return send(res,503,{status:'error',code:'connection_not_ready',message:'The existing widget connection needs its Still sync key.'});
-  if(!authorized(req))return send(res,401,{status:'error',code:'unauthorized',message:'Connection authorization failed.'});
-  if(!process.env.NOTION_TOKEN)return send(res,503,{status:'error',code:'connection_not_ready',message:'The existing Notion connection is not configured.'});
   let body;
   try{body=typeof req.body==='string'?JSON.parse(req.body):req.body;if(!body||JSON.stringify(body).length>4096)throw Error();}catch{return send(res,400,{status:'error',code:'invalid_request',message:'Invalid request.'});}
+  if(!authorized(req,body))return send(res,401,{status:'error',code:'unauthorized',message:'Connection authorization failed.'});
+  if(!process.env.NOTION_TOKEN)return send(res,503,{status:'error',code:'connection_not_ready',message:'The existing Notion connection is not configured.'});
   const read=body.action==='read'&&Object.hasOwn(SOURCES,body.source);
   const write=body.action==='setTask'&&UUID.test(body.taskId)&&['Done','Not started','In progress'].includes(body.status);
   if(!read&&!write)return send(res,400,{status:'error',code:'invalid_request',message:'Unsupported task or goal action.'});
